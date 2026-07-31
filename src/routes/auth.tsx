@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate, redirect, Link } from "@tanstack/react-ro
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -57,16 +56,6 @@ function AuthPage() {
               <TabsContent value="signup"><SignupForm onDone={() => nav({ to: "/dashboard" })} /></TabsContent>
             </Tabs>
 
-            <div className="my-4 flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" /> OR <div className="h-px flex-1 bg-border" />
-            </div>
-            <Button variant="outline" className="w-full" onClick={async () => {
-              const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/dashboard" });
-              if (r.error) toast.error(r.error.message);
-              else if (!r.redirected) nav({ to: "/dashboard" });
-            }}>
-              Continue with Google
-            </Button>
             <p className="mt-4 text-center text-xs text-muted-foreground">
               <Link to="/" className="hover:underline">← Back to home</Link>
             </p>
