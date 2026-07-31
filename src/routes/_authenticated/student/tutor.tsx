@@ -94,8 +94,8 @@ function Tutor() {
         </ScrollArea>
       </aside>
 
-      <div className="flex h-full flex-col">
-        <div className="border-b p-4">
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="shrink-0 border-b p-4">
           <h1 className="text-2xl font-bold flex items-center gap-2"><Brain className="h-6 w-6 text-primary" /> AI Study Tutor</h1>
           <div className="mt-3 flex flex-wrap gap-2">
             {modeButtons.map(b => (
@@ -106,7 +106,7 @@ function Tutor() {
           </div>
         </div>
 
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4">
           {messages.length === 0 && (
             <div className="mx-auto max-w-md py-16 text-center text-muted-foreground">
               <Brain className="mx-auto mb-4 h-12 w-12 text-primary/40" />
@@ -127,7 +127,7 @@ function Tutor() {
           </div>
         </div>
 
-        <div className="border-t p-4">
+        <div className="shrink-0 border-t p-4">
           <div className="mx-auto max-w-3xl">
             {attachment && (
               <div className="mb-2 flex items-center gap-2 rounded-md border bg-accent/50 px-3 py-2 text-sm">
