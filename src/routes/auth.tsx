@@ -87,14 +87,24 @@ function SignupForm({ onDone }: { onDone: () => void }) {
   return (
     <form className="space-y-3 pt-3" onSubmit={async (e) => {
       e.preventDefault(); setLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email, password: pw,
-        options: { data: { full_name: name }, emailRedirectTo: window.location.origin + "/dashboard" },
+        options: { data: { full_name: name } },
       });
+      if (error) { setLoading(false); toast.error(error.message); return; }
+      if (!data.session) {
+        // No session means confirmation is still on in the project settings — sign in directly.
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password: pw });
+        if (signInError) {
+          setLoading(false);
+          toast.error("Email confirmation is still enabled in your Supabase project. Turn off “Confirm email” under Authentication → Sign In / Providers → Email.");
+          return;
+        }
+      }
       setLoading(false);
-      if (error) toast.error(error.message);
-      else { toast.success("Account created — you're signed in"); onDone(); }
+      toast.success("Account created — you're signed in"); onDone();
     }}>
+
       <div><Label htmlFor="sn">Full name</Label><Input id="sn" required value={name} onChange={(e) => setName(e.target.value)} /></div>
       <div><Label htmlFor="se">Email</Label><Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
       <div><Label htmlFor="sp">Password</Label><Input id="sp" type="password" required minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} /></div>
