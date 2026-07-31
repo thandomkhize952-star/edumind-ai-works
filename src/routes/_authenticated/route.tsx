@@ -40,8 +40,9 @@ function AuthedShell() {
         label: "Learning",
         items: [
           { to: "/student/courses", label: "Courses", icon: BookOpen },
-          { to: "/student/enroll", label: "Browse Qualifications", icon: Library },
-          { to: "/student/assessments", label: "Assessments", icon: ClipboardList },
+          { to: "/student/materials", label: "Materials", icon: Library },
+          { to: "/student/quizzes", label: "Quizzes", icon: ClipboardList },
+          { to: "/student/assignments", label: "Assignments", icon: FileText },
           { to: "/student/marks", label: "My Marks", icon: FileText },
         ],
       },

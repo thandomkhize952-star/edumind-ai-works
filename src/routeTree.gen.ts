@@ -14,11 +14,14 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedStudentTutorRouteImport } from './routes/_authenticated/student/tutor'
+import { Route as AuthenticatedStudentQuizzesRouteImport } from './routes/_authenticated/student/quizzes'
 import { Route as AuthenticatedStudentProfileRouteImport } from './routes/_authenticated/student/profile'
 import { Route as AuthenticatedStudentNotificationsRouteImport } from './routes/_authenticated/student/notifications'
+import { Route as AuthenticatedStudentMaterialsRouteImport } from './routes/_authenticated/student/materials'
 import { Route as AuthenticatedStudentMarksRouteImport } from './routes/_authenticated/student/marks'
 import { Route as AuthenticatedStudentEnrollRouteImport } from './routes/_authenticated/student/enroll'
 import { Route as AuthenticatedStudentCoursesRouteImport } from './routes/_authenticated/student/courses'
+import { Route as AuthenticatedStudentAssignmentsRouteImport } from './routes/_authenticated/student/assignments'
 import { Route as AuthenticatedLecturerProfileRouteImport } from './routes/_authenticated/lecturer/profile'
 import { Route as AuthenticatedLecturerPerformanceRouteImport } from './routes/_authenticated/lecturer/performance'
 import { Route as AuthenticatedLecturerAtRiskRouteImport } from './routes/_authenticated/lecturer/at-risk'
@@ -60,6 +63,12 @@ const AuthenticatedStudentTutorRoute =
     path: '/student/tutor',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStudentQuizzesRoute =
+  AuthenticatedStudentQuizzesRouteImport.update({
+    id: '/student/quizzes',
+    path: '/student/quizzes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStudentProfileRoute =
   AuthenticatedStudentProfileRouteImport.update({
     id: '/student/profile',
@@ -70,6 +79,12 @@ const AuthenticatedStudentNotificationsRoute =
   AuthenticatedStudentNotificationsRouteImport.update({
     id: '/student/notifications',
     path: '/student/notifications',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentMaterialsRoute =
+  AuthenticatedStudentMaterialsRouteImport.update({
+    id: '/student/materials',
+    path: '/student/materials',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedStudentMarksRoute =
@@ -88,6 +103,12 @@ const AuthenticatedStudentCoursesRoute =
   AuthenticatedStudentCoursesRouteImport.update({
     id: '/student/courses',
     path: '/student/courses',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentAssignmentsRoute =
+  AuthenticatedStudentAssignmentsRouteImport.update({
+    id: '/student/assignments',
+    path: '/student/assignments',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedLecturerProfileRoute =
@@ -192,11 +213,14 @@ export interface FileRoutesByFullPath {
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
+  '/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
   '/student/courses': typeof AuthenticatedStudentCoursesRouteWithChildren
   '/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/student/marks': typeof AuthenticatedStudentMarksRoute
+  '/student/materials': typeof AuthenticatedStudentMaterialsRoute
   '/student/notifications': typeof AuthenticatedStudentNotificationsRoute
   '/student/profile': typeof AuthenticatedStudentProfileRoute
+  '/student/quizzes': typeof AuthenticatedStudentQuizzesRoute
   '/student/tutor': typeof AuthenticatedStudentTutorRoute
   '/lecturer/modules/$id': typeof AuthenticatedLecturerModulesIdRoute
   '/student/assessments/$id': typeof AuthenticatedStudentAssessmentsIdRoute
@@ -218,10 +242,13 @@ export interface FileRoutesByTo {
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
+  '/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
   '/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/student/marks': typeof AuthenticatedStudentMarksRoute
+  '/student/materials': typeof AuthenticatedStudentMaterialsRoute
   '/student/notifications': typeof AuthenticatedStudentNotificationsRoute
   '/student/profile': typeof AuthenticatedStudentProfileRoute
+  '/student/quizzes': typeof AuthenticatedStudentQuizzesRoute
   '/student/tutor': typeof AuthenticatedStudentTutorRoute
   '/lecturer/modules/$id': typeof AuthenticatedLecturerModulesIdRoute
   '/student/assessments/$id': typeof AuthenticatedStudentAssessmentsIdRoute
@@ -245,11 +272,14 @@ export interface FileRoutesById {
   '/_authenticated/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/_authenticated/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/_authenticated/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
+  '/_authenticated/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
   '/_authenticated/student/courses': typeof AuthenticatedStudentCoursesRouteWithChildren
   '/_authenticated/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/_authenticated/student/marks': typeof AuthenticatedStudentMarksRoute
+  '/_authenticated/student/materials': typeof AuthenticatedStudentMaterialsRoute
   '/_authenticated/student/notifications': typeof AuthenticatedStudentNotificationsRoute
   '/_authenticated/student/profile': typeof AuthenticatedStudentProfileRoute
+  '/_authenticated/student/quizzes': typeof AuthenticatedStudentQuizzesRoute
   '/_authenticated/student/tutor': typeof AuthenticatedStudentTutorRoute
   '/_authenticated/lecturer/modules/$id': typeof AuthenticatedLecturerModulesIdRoute
   '/_authenticated/student/assessments/$id': typeof AuthenticatedStudentAssessmentsIdRoute
@@ -273,11 +303,14 @@ export interface FileRouteTypes {
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
+    | '/student/assignments'
     | '/student/courses'
     | '/student/enroll'
     | '/student/marks'
+    | '/student/materials'
     | '/student/notifications'
     | '/student/profile'
+    | '/student/quizzes'
     | '/student/tutor'
     | '/lecturer/modules/$id'
     | '/student/assessments/$id'
@@ -299,10 +332,13 @@ export interface FileRouteTypes {
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
+    | '/student/assignments'
     | '/student/enroll'
     | '/student/marks'
+    | '/student/materials'
     | '/student/notifications'
     | '/student/profile'
+    | '/student/quizzes'
     | '/student/tutor'
     | '/lecturer/modules/$id'
     | '/student/assessments/$id'
@@ -325,11 +361,14 @@ export interface FileRouteTypes {
     | '/_authenticated/lecturer/at-risk'
     | '/_authenticated/lecturer/performance'
     | '/_authenticated/lecturer/profile'
+    | '/_authenticated/student/assignments'
     | '/_authenticated/student/courses'
     | '/_authenticated/student/enroll'
     | '/_authenticated/student/marks'
+    | '/_authenticated/student/materials'
     | '/_authenticated/student/notifications'
     | '/_authenticated/student/profile'
+    | '/_authenticated/student/quizzes'
     | '/_authenticated/student/tutor'
     | '/_authenticated/lecturer/modules/$id'
     | '/_authenticated/student/assessments/$id'
@@ -383,6 +422,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentTutorRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/student/quizzes': {
+      id: '/_authenticated/student/quizzes'
+      path: '/student/quizzes'
+      fullPath: '/student/quizzes'
+      preLoaderRoute: typeof AuthenticatedStudentQuizzesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/student/profile': {
       id: '/_authenticated/student/profile'
       path: '/student/profile'
@@ -395,6 +441,13 @@ declare module '@tanstack/react-router' {
       path: '/student/notifications'
       fullPath: '/student/notifications'
       preLoaderRoute: typeof AuthenticatedStudentNotificationsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/materials': {
+      id: '/_authenticated/student/materials'
+      path: '/student/materials'
+      fullPath: '/student/materials'
+      preLoaderRoute: typeof AuthenticatedStudentMaterialsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/student/marks': {
@@ -416,6 +469,13 @@ declare module '@tanstack/react-router' {
       path: '/student/courses'
       fullPath: '/student/courses'
       preLoaderRoute: typeof AuthenticatedStudentCoursesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/assignments': {
+      id: '/_authenticated/student/assignments'
+      path: '/student/assignments'
+      fullPath: '/student/assignments'
+      preLoaderRoute: typeof AuthenticatedStudentAssignmentsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/lecturer/profile': {
@@ -554,11 +614,14 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLecturerAtRiskRoute: typeof AuthenticatedLecturerAtRiskRoute
   AuthenticatedLecturerPerformanceRoute: typeof AuthenticatedLecturerPerformanceRoute
   AuthenticatedLecturerProfileRoute: typeof AuthenticatedLecturerProfileRoute
+  AuthenticatedStudentAssignmentsRoute: typeof AuthenticatedStudentAssignmentsRoute
   AuthenticatedStudentCoursesRoute: typeof AuthenticatedStudentCoursesRouteWithChildren
   AuthenticatedStudentEnrollRoute: typeof AuthenticatedStudentEnrollRoute
   AuthenticatedStudentMarksRoute: typeof AuthenticatedStudentMarksRoute
+  AuthenticatedStudentMaterialsRoute: typeof AuthenticatedStudentMaterialsRoute
   AuthenticatedStudentNotificationsRoute: typeof AuthenticatedStudentNotificationsRoute
   AuthenticatedStudentProfileRoute: typeof AuthenticatedStudentProfileRoute
+  AuthenticatedStudentQuizzesRoute: typeof AuthenticatedStudentQuizzesRoute
   AuthenticatedStudentTutorRoute: typeof AuthenticatedStudentTutorRoute
   AuthenticatedLecturerModulesIdRoute: typeof AuthenticatedLecturerModulesIdRoute
   AuthenticatedStudentAssessmentsIdRoute: typeof AuthenticatedStudentAssessmentsIdRoute
@@ -577,13 +640,16 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedLecturerAtRiskRoute: AuthenticatedLecturerAtRiskRoute,
   AuthenticatedLecturerPerformanceRoute: AuthenticatedLecturerPerformanceRoute,
   AuthenticatedLecturerProfileRoute: AuthenticatedLecturerProfileRoute,
+  AuthenticatedStudentAssignmentsRoute: AuthenticatedStudentAssignmentsRoute,
   AuthenticatedStudentCoursesRoute:
     AuthenticatedStudentCoursesRouteWithChildren,
   AuthenticatedStudentEnrollRoute: AuthenticatedStudentEnrollRoute,
   AuthenticatedStudentMarksRoute: AuthenticatedStudentMarksRoute,
+  AuthenticatedStudentMaterialsRoute: AuthenticatedStudentMaterialsRoute,
   AuthenticatedStudentNotificationsRoute:
     AuthenticatedStudentNotificationsRoute,
   AuthenticatedStudentProfileRoute: AuthenticatedStudentProfileRoute,
+  AuthenticatedStudentQuizzesRoute: AuthenticatedStudentQuizzesRoute,
   AuthenticatedStudentTutorRoute: AuthenticatedStudentTutorRoute,
   AuthenticatedLecturerModulesIdRoute: AuthenticatedLecturerModulesIdRoute,
   AuthenticatedStudentAssessmentsIdRoute:
