@@ -31,19 +31,19 @@ function AuthPage() {
       <div className="hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col lg:justify-between">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-sidebar-primary p-2 text-sidebar-primary-foreground"><GraduationCap className="h-5 w-5" /></div>
-          <span className="text-lg font-semibold">EduHub</span>
+          <span className="text-lg font-semibold">EduMind AI</span>
         </div>
         <div>
           <h2 className="text-4xl font-bold leading-tight">Learn smarter,<br />teach better.</h2>
-          <p className="mt-4 max-w-md text-sidebar-foreground/70">A modern LMS with built-in AI tutoring for students and full course tooling for lecturers.</p>
+          <p className="mt-4 max-w-md text-sidebar-foreground/70">An AI-powered LMS for students, lecturers and administrators.</p>
         </div>
-        <p className="text-xs text-sidebar-foreground/50">© EduHub</p>
+        <p className="text-xs text-sidebar-foreground/50">© EduMind AI</p>
       </div>
 
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle>Welcome to EduHub</CardTitle>
+            <CardTitle>Welcome to EduMind AI</CardTitle>
             <CardDescription>Sign in or create your account.</CardDescription>
           </CardHeader>
           <CardContent>

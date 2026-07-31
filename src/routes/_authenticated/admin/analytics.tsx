@@ -23,7 +23,7 @@ function buildCsv(data: Analytics): string {
   const lines: string[] = [];
   const row = (arr: unknown[]) => lines.push(arr.map(csvEscape).join(","));
 
-  row(["EduHub Analytics Report"]);
+  row(["EduMind AI Analytics Report"]);
   row(["Generated at", data.generated_at]);
   row([]);
 
@@ -65,7 +65,7 @@ function download(data: Analytics) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `eduhub-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `edumind-ai-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
   document.body.appendChild(a);
   a.click();
   a.remove();

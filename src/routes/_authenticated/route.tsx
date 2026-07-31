@@ -65,7 +65,7 @@ function AuthedShell() {
       <aside className="hidden border-r bg-sidebar text-sidebar-foreground lg:flex lg:flex-col">
         <div className="flex items-center gap-2 border-b border-sidebar-border px-5 py-4">
           <div className="rounded-lg bg-sidebar-primary p-2 text-sidebar-primary-foreground"><GraduationCap className="h-5 w-5" /></div>
-          <span className="text-lg font-semibold">EduHub</span>
+          <span className="text-lg font-semibold">EduMind AI</span>
         </div>
         <nav className="flex-1 space-y-0.5 p-3">
           {nav.filter((n) => n.show).map((n) => {
@@ -92,7 +92,7 @@ function AuthedShell() {
       </aside>
       <main className="min-h-screen bg-background">
         <div className="lg:hidden flex items-center justify-between border-b px-4 py-3">
-          <div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><span className="font-semibold">EduHub</span></div>
+          <div className="flex items-center gap-2"><GraduationCap className="h-5 w-5 text-primary" /><span className="font-semibold">EduMind AI</span></div>
           <Button size="sm" variant="ghost" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
         </div>
         <Outlet />
