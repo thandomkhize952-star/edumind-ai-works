@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/student/profile")({
 function Profile() {
   const qc = useQueryClient();
   const allocate = useServerFn(ensureStudentNumber);
-  useQuery({ queryKey: ["ensure-student-number"], queryFn: () => allocate({ data: {} as never }), staleTime: Infinity });
+  useQuery({ queryKey: ["ensure-student-number"], queryFn: async () => { const r = await allocate({ data: {} as never }); if (r?.studentNumber) qc.invalidateQueries({ queryKey: ["my-profile"] }); return r; }, staleTime: Infinity });
   const { data } = useQuery({
     queryKey: ["my-profile"],
     queryFn: async () => {

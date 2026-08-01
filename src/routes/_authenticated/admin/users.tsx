@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { listAllUsers, setUserRole, deleteUser } from "@/lib/admin.functions";
+import { listAllUsers, setUserRole, deleteUser, createStaffUser } from "@/lib/admin.functions";
 import { getCurrentUserContext } from "@/lib/user.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -19,7 +19,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Trash2 } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
@@ -32,6 +35,7 @@ function AdminUsers() {
   const list = useServerFn(listAllUsers);
   const set = useServerFn(setUserRole);
   const del = useServerFn(deleteUser);
+  const addStaff = useServerFn(createStaffUser);
   const me = useServerFn(getCurrentUserContext);
   const qc = useQueryClient();
   const { data, isLoading } = useQuery({ queryKey: ["admin-users"], queryFn: () => list() });
@@ -51,8 +55,9 @@ function AdminUsers() {
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
         <h1 className="text-3xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Toggle roles or remove accounts.</p>
+        <p className="text-muted-foreground">Students self-register and are auto-assigned a student number. Lecturers are added here by an admin.</p>
       </div>
+      <AddLecturerCard onCreate={(v) => addStaff({ data: v })} onCreated={() => qc.invalidateQueries({ queryKey: ["admin-users"] })} />
       <Card>
         <CardHeader>
           <CardTitle>All users</CardTitle>
@@ -124,5 +129,44 @@ function AdminUsers() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function AddLecturerCard({
+  onCreate,
+  onCreated,
+}: {
+  onCreate: (v: { email: string; password: string; fullName: string; role: "lecturer" | "admin" }) => Promise<unknown>;
+  onCreated: () => void;
+}) {
+  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const m = useMutation({
+    mutationFn: () => onCreate({ ...form, role: "lecturer" }),
+    onSuccess: () => {
+      toast.success("Lecturer account created");
+      setForm({ fullName: "", email: "", password: "" });
+      onCreated();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Add a lecturer</CardTitle>
+        <CardDescription>Only admins can create lecturer accounts. The lecturer signs in with these details.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form
+          className="grid gap-3 sm:grid-cols-4 sm:items-end"
+          onSubmit={(e) => { e.preventDefault(); m.mutate(); }}
+        >
+          <div><Label htmlFor="lname">Full name</Label><Input id="lname" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} /></div>
+          <div><Label htmlFor="lemail">Email</Label><Input id="lemail" type="email" required value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} /></div>
+          <div><Label htmlFor="lpw">Temporary password</Label><Input id="lpw" type="text" required minLength={6} value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} /></div>
+          <Button type="submit" disabled={m.isPending}>{m.isPending ? "Creating…" : "Create lecturer"}</Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }
