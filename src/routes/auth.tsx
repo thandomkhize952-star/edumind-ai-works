@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ensureStudentNumber } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/auth")({
+  ssr: false,
   validateSearch: z.object({ mode: z.enum(["login", "signup"]).optional() }),
   beforeLoad: async () => {
     if (typeof window === "undefined") return;
