@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentUserContext } from "@/lib/user.functions";
 import { listAllUsers } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound } from "lucide-react";
+import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound, CheckCircle2, X, Trophy, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
@@ -31,6 +34,10 @@ function Dashboard() {
     return <AdminDashboard name={name} />;
   }
 
+  if (isStudent && me?.userId) {
+    return <StudentDashboard userId={me.userId} name={name} />;
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
@@ -39,11 +46,10 @@ function Dashboard() {
           Role{roles.length > 1 ? "s" : ""}: {roles.join(", ") || "student"}
         </p>
       </div>
-
-      {isStudent && me?.userId && <StudentDashboard userId={me.userId} />}
     </div>
   );
 }
+
 
 function AdminDashboard({ name }: { name: string }) {
   const fetchUsers = useServerFn(listAllUsers);
@@ -379,11 +385,13 @@ function LecturerDashboard({ userId, name }: { userId: string; name: string }) {
   );
 }
 
-function StudentDashboard({ userId }: { userId: string }) {
-  const { data, isLoading } = useQuery({
+function StudentDashboard({ userId, name }: { userId: string; name: string }) {
+  const [dismissed, setDismissed] = useState(false);
+
+  const { data } = useQuery({
     queryKey: ["student-dashboard", userId],
     queryFn: async () => {
-      const [subsRes, chatsRes, attRes, pubRes] = await Promise.all([
+      const [subsRes, chatsRes, attRes, enrRes] = await Promise.all([
         supabase
           .from("submissions")
           .select("id, score, submitted_at, graded_at, assessments(id, title, type, total_marks, module_id)")
@@ -391,29 +399,16 @@ function StudentDashboard({ userId }: { userId: string }) {
           .order("submitted_at", { ascending: false }),
         supabase
           .from("ai_chats")
-          .select("id, title, created_at", { count: "exact" })
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false })
-          .limit(5),
-        supabase
-          .from("attendance")
-          .select("status, date, module_id")
-          .eq("student_id", userId),
-        supabase
-          .from("assessments")
-          .select("id, title, type, module_id, due_at, created_at")
-          .eq("published", true)
-          .order("created_at", { ascending: false })
-          .limit(10),
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase.from("attendance").select("status, date").eq("student_id", userId).order("date", { ascending: false }),
+        supabase.from("enrollments").select("qualification_id, qualifications(code, title)").eq("student_id", userId),
       ]);
 
       const subs = subsRes.data ?? [];
-      const chats = chatsRes.data ?? [];
-      const aiCount = chatsRes.count ?? chats.length;
       const att = attRes.data ?? [];
-      const pubs = pubRes.data ?? [];
+      const enrolls = enrRes.data ?? [];
 
-      // Average %
       const pcts = subs
         .map((s) => {
           const tot = Number(s.assessments?.total_marks || 0);
@@ -421,143 +416,216 @@ function StudentDashboard({ userId }: { userId: string }) {
         })
         .filter((v): v is number => v !== null);
       const avgPct = pcts.length ? pcts.reduce((a, b) => a + b, 0) / pcts.length : 0;
-      const gpa = +((avgPct / 100) * 4).toFixed(2);
+      const gpa = +((avgPct / 100) * 4).toFixed(1);
 
-      // Attendance
       const presentish = att.filter((a) => a.status === "present" || a.status === "late").length;
-      const attPct = att.length ? Math.round((presentish / att.length) * 100) : 0;
+      const attPct = att.length ? (presentish / att.length) * 100 : 0;
+      const attRecent = att.slice(0, 7).reverse().map((a) => a.status === "present" || a.status === "late");
 
-      // Module map for labels
-      const moduleIds = Array.from(
-        new Set(
-          [
-            ...subs.map((s) => s.assessments?.module_id),
-            ...pubs.map((p) => p.module_id),
-            ...att.map((a) => a.module_id),
-          ].filter(Boolean) as string[],
-        ),
-      );
-      const { data: mods } = moduleIds.length
-        ? await supabase.from("modules").select("id, code, title").in("id", moduleIds)
-        : { data: [] };
-      const modById = Object.fromEntries((mods ?? []).map((m) => [m.id, m]));
+      const quizzesTaken = subs.filter((s) => s.assessments && s.assessments.type !== "assignment").length;
+      const assignments = subs.filter((s) => s.assessments?.type === "assignment").length;
 
-      // Activity feed: recent submissions + recently published assessments
-      type Activity = {
-        kind: "graded" | "submitted" | "published";
-        at: string;
-        title: string;
-        module?: string;
-        meta?: string;
+      const q = enrolls[0]?.qualifications;
+      return {
+        gpa,
+        avgPct,
+        attPct,
+        attRecent,
+        aiCount: chatsRes.count ?? 0,
+        courses: enrolls.length,
+        qualification: q ? `${q.code} — ${q.title}` : null,
+        quizzesTaken,
+        assignments,
       };
-      const activity: Activity[] = [];
-      for (const s of subs.slice(0, 10)) {
-        const mod = s.assessments ? modById[s.assessments.module_id]?.code : undefined;
-        const tot = Number(s.assessments?.total_marks || 0);
-        const pct = tot > 0 ? Math.round((Number(s.score ?? 0) / tot) * 100) : null;
-        activity.push({
-          kind: s.graded_at ? "graded" : "submitted",
-          at: s.graded_at ?? s.submitted_at,
-          title: s.assessments?.title ?? "Assessment",
-          module: mod,
-          meta: pct !== null ? `${s.score}/${s.assessments?.total_marks} (${pct}%)` : s.assessments?.type,
-        });
-      }
-      for (const p of pubs.slice(0, 5)) {
-        activity.push({
-          kind: "published",
-          at: p.created_at ?? new Date().toISOString(),
-          title: p.title,
-          module: modById[p.module_id]?.code,
-          meta: p.type,
-        });
-      }
-      activity.sort((a, b) => +new Date(b.at) - +new Date(a.at));
-
-      return { avgPct: Math.round(avgPct), gpa, aiCount, attPct, attCount: att.length, activity: activity.slice(0, 8), subCount: subs.length };
     },
   });
 
-  const stats = data;
+  const gpa = data?.gpa ?? 0;
+  const avgPct = data?.avgPct ?? 0;
+  const attPct = data?.attPct ?? 0;
+  const ring = 2 * Math.PI * 52;
 
   return (
-    <>
-      <div className="grid gap-4 md:grid-cols-4">
-        <MetricCard
-          icon={Award}
-          label="Average GPA"
-          value={stats ? `${stats.gpa.toFixed(2)} / 4.0` : "—"}
-          sub={stats ? `${stats.avgPct}% across ${stats.subCount} assessment${stats.subCount === 1 ? "" : "s"}` : "No marks yet"}
-          progress={stats?.avgPct}
-        />
-        <MetricCard
-          icon={Brain}
-          label="AI Sessions"
-          value={stats ? String(stats.aiCount) : "—"}
-          sub="Study tutor chats started"
-        />
-        <MetricCard
-          icon={CalendarCheck}
-          label="Avg Attendance"
-          value={stats ? `${stats.attPct}%` : "—"}
-          sub={stats ? `${stats.attCount} class${stats.attCount === 1 ? "" : "es"} recorded` : "No records yet"}
-          progress={stats?.attPct}
-        />
-        <MetricCard
-          icon={ClipboardList}
-          label="Submissions"
-          value={stats ? String(stats.subCount) : "—"}
-          sub="Total assessments completed"
-        />
-      </div>
+    <div className="mx-auto max-w-7xl space-y-5 p-6">
+      {!dismissed && (
+        <div className="flex items-center justify-between gap-4 rounded-2xl border border-success/40 bg-success/10 px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-success" />
+            <span className="truncate text-base font-semibold">Welcome back, {name}!</span>
+          </div>
+          <button aria-label="Dismiss" onClick={() => setDismissed(true)} className="shrink-0 text-muted-foreground hover:text-foreground">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Course Activity</CardTitle>
-            <CardDescription>Recent marks, submissions, and new assessments</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {isLoading && <div className="text-sm text-muted-foreground">Loading activity…</div>}
-            {!isLoading && !stats?.activity.length && (
-              <div className="text-sm text-muted-foreground">No recent activity yet. Enroll in a qualification to get started.</div>
-            )}
-            {stats?.activity.map((a, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-md border p-3">
-                <div className="rounded-md bg-accent p-2 text-accent-foreground">
-                  {a.kind === "graded" ? <Award className="h-4 w-4" /> : a.kind === "published" ? <ClipboardList className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
+      <div className="grid gap-5 lg:grid-cols-[1.1fr_1fr]">
+        {/* Academic performance */}
+        <Card className="glass overflow-hidden rounded-2xl">
+          <CardContent className="flex h-full flex-col p-6">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-xl bg-primary/15 p-2.5 text-primary"><Trophy className="h-5 w-5" /></div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.14em] text-muted-foreground">Academic Performance</div>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{a.title}</span>
-                    {a.module && <Badge variant="secondary">{a.module}</Badge>}
-                    <Badge variant="outline" className="capitalize">{a.kind}</Badge>
-                  </div>
-                  {a.meta && <div className="text-sm text-muted-foreground">{a.meta}</div>}
-                  <div className="text-xs text-muted-foreground">{new Date(a.at).toLocaleString()}</div>
+                <div className="mt-6 flex items-end gap-1">
+                  <span className="text-6xl font-bold leading-none tracking-tight">{gpa.toFixed(1)}</span>
+                  <span className="pb-1 text-3xl font-semibold text-muted-foreground">/4.0</span>
+                </div>
+                <div className="mt-4 truncate text-base font-medium text-accent">{data?.qualification ?? "Not enrolled yet"}</div>
+                <div className="text-sm text-muted-foreground">Overall grade: {avgPct.toFixed(1)}%</div>
+              </div>
+
+              <div className="relative h-32 w-32 shrink-0">
+                <svg viewBox="0 0 120 120" className="h-full w-full -rotate-90">
+                  <defs>
+                    <linearGradient id="gradeGrad" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="oklch(0.62 0.20 285)" />
+                      <stop offset="100%" stopColor="oklch(0.70 0.20 350)" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border)" strokeWidth="10" />
+                  <circle
+                    cx="60" cy="60" r="52" fill="none" stroke="url(#gradeGrad)" strokeWidth="10" strokeLinecap="round"
+                    strokeDasharray={ring} strokeDashoffset={ring * (1 - Math.min(avgPct, 100) / 100)}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-2xl font-bold leading-none">{avgPct.toFixed(1)}%</span>
+                  <span className="mt-1 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Grade</span>
                 </div>
               </div>
-            ))}
+            </div>
+
+            <div className="mt-auto grid grid-cols-3 divide-x divide-border border-t border-border pt-5 text-center">
+              <MiniStat value={data?.quizzesTaken ?? 0} label="Quizzes Taken" />
+              <MiniStat value={data?.assignments ?? 0} label="Assignments" />
+              <MiniStat value={data?.courses ?? 0} label="Courses" />
+            </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Jump straight in</CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-2 text-sm">
-            <QuickLink to="/student/assessments" icon={ClipboardList} label="Take an assessment" />
-            <QuickLink to="/student/marks" icon={FileText} label="View my marks" />
-            <QuickLink to="/student/tutor" icon={Brain} label="Open AI study tutor" />
-            <QuickLink to="/student/courses" icon={BookOpen} label="My courses" />
-            <QuickLink to="/student/enroll" icon={Layers} label="Browse qualifications" />
-          </CardContent>
-        </Card>
+        <div className="grid gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            {/* Attendance */}
+            <Card className="glass rounded-2xl">
+              <CardContent className="p-5">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                  <div className="rounded-xl bg-success/15 p-2.5 text-success"><CalendarCheck className="h-5 w-5" /></div>
+                  {attPct < 75 && (
+                    <span className="justify-self-end rounded-full bg-warning/15 px-3 py-1 text-xs font-semibold text-warning">Needs Attention</span>
+                  )}
+                </div>
+                <div className="mt-4 text-4xl font-bold tracking-tight">{attPct.toFixed(1)}%</div>
+                <div className="text-sm text-muted-foreground">Attendance Rate</div>
+                <div className="mt-4 flex gap-1.5">
+                  {(data?.attRecent?.length ? data.attRecent : Array(7).fill(false)).map((ok, i) => (
+                    <div key={i} className={cn("h-6 flex-1 rounded-md", ok ? "bg-success/60" : "bg-success/15")} />
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* AI sessions */}
+            <Card className="glass rounded-2xl">
+              <CardContent className="p-5">
+                <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3">
+                  <div className="relative rounded-xl bg-accent/15 p-2.5 text-accent">
+                    <Bot className="h-5 w-5" />
+                    <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-accent" />
+                  </div>
+                  <span className="justify-self-end rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">Live</span>
+                </div>
+                <div className="mt-4 text-4xl font-bold tracking-tight">{data?.aiCount ?? 0}</div>
+                <div className="text-sm text-muted-foreground">AI Sessions</div>
+                <Link to="/student/tutor" className="mt-3 inline-block text-sm font-medium text-accent hover:underline">
+                  Ask anything →
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          <RowCard
+            to="/student/courses"
+            icon={BookOpen}
+            tint="bg-primary/15 text-primary"
+            value={data?.courses ?? 0}
+            label="Active Courses"
+            progress={Math.min(((data?.courses ?? 0) / 6) * 100, 100)}
+            progressLabel={`${data?.courses ?? 0}/6 max`}
+          />
+          <RowCard
+            to="/student/assignments"
+            icon={ClipboardList}
+            tint="bg-fuchsia-500/15 text-fuchsia-300"
+            value={data?.assignments ?? 0}
+            label="Assignments"
+            sub={`${data?.assignments ?? 0} submitted`}
+          />
+        </div>
       </div>
-    </>
+
+      <Card className="glass rounded-2xl border-accent/25">
+        <CardContent className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 p-5">
+          <div className="rounded-xl bg-accent/15 p-3 text-accent"><Sparkles className="h-5 w-5" /></div>
+          <div className="min-w-0">
+            <div className="font-semibold">AI Insight: your average is {avgPct.toFixed(1)}% across your assessments</div>
+            <div className="text-sm text-muted-foreground">Keep your study streak going to reach your GPA goal.</div>
+          </div>
+          <Button asChild variant="secondary" className="rounded-xl">
+            <Link to="/student/marks">View Details</Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
+
+function MiniStat({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="px-2">
+      <div className="text-2xl font-bold">{value}</div>
+      <div className="text-xs text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function RowCard({
+  to, icon: Icon, tint, value, label, sub, progress, progressLabel,
+}: {
+  to: string;
+  icon: React.ComponentType<{ className?: string }>;
+  tint: string;
+  value: number;
+  label: string;
+  sub?: string;
+  progress?: number;
+  progressLabel?: string;
+}) {
+  return (
+    <Link to={to} className="glass group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-2xl p-5 transition-colors hover:bg-sidebar-accent/40">
+      <div className={cn("rounded-xl p-3", tint)}><Icon className="h-5 w-5" /></div>
+      <div className="min-w-0">
+        <div className="flex items-baseline gap-2">
+          <span className="text-2xl font-bold">{value}</span>
+          <span className="truncate text-sm text-muted-foreground">{label}</span>
+        </div>
+        {typeof progress === "number" && (
+          <div className="mt-2 flex items-center gap-3">
+            <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-border">
+              <div className="h-full rounded-full bg-gradient-to-r from-primary to-accent" style={{ width: `${progress}%` }} />
+            </div>
+            {progressLabel && <span className="shrink-0 text-xs text-muted-foreground">{progressLabel}</span>}
+          </div>
+        )}
+        {sub && <div className="mt-1 text-xs text-muted-foreground">{sub}</div>}
+      </div>
+      <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+    </Link>
+  );
+}
+
 
 function StaffOverview() {
   const { data: stats } = useQuery({
