@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { getCurrentUserContext } from "@/lib/user.functions";
 import { listAllUsers } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound } from "lucide-react";
+import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound, CheckCircle2, X, Trophy, Bot, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: Dashboard,
