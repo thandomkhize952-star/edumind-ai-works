@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { ensureStudentNumber } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/_authenticated/student/profile")({
   component: Profile,
@@ -15,6 +17,8 @@ export const Route = createFileRoute("/_authenticated/student/profile")({
 
 function Profile() {
   const qc = useQueryClient();
+  const allocate = useServerFn(ensureStudentNumber);
+  useQuery({ queryKey: ["ensure-student-number"], queryFn: () => allocate({ data: {} as never }), staleTime: Infinity });
   const { data } = useQuery({
     queryKey: ["my-profile"],
     queryFn: async () => {
@@ -30,7 +34,8 @@ function Profile() {
   const save = useMutation({
     mutationFn: async () => {
       if (!data) return;
-      const { error } = await supabase.from("profiles").update(form).eq("id", data.id);
+      const { student_number: _sn, ...editable } = form;
+      const { error } = await supabase.from("profiles").update(editable).eq("id", data.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Profile saved"); qc.invalidateQueries({ queryKey: ["my-profile"] }); qc.invalidateQueries({ queryKey: ["me"] }); },
@@ -45,7 +50,7 @@ function Profile() {
         <CardContent>
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
             <div><Label>Full name</Label><Input value={form.full_name} onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))} /></div>
-            <div><Label>Student number</Label><Input value={form.student_number} onChange={(e) => setForm(f => ({ ...f, student_number: e.target.value }))} /></div>
+            <div><Label>Student number</Label><Input value={form.student_number || "Being allocated…"} readOnly disabled /><p className="mt-1 text-xs text-muted-foreground">Automatically allocated by the system.</p></div>
             <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
             <div><Label>Bio</Label><Textarea rows={4} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} /></div>
             <Button type="submit" disabled={save.isPending}>{save.isPending ? "Saving…" : "Save"}</Button>

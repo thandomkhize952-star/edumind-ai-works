@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
+import { ensureStudentNumber } from "@/lib/onboarding.functions";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: z.object({ mode: z.enum(["login", "signup"]).optional() }),
@@ -100,6 +101,12 @@ function SignupForm({ onDone }: { onDone: () => void }) {
           toast.error("Email confirmation is still enabled in your Supabase project. Turn off “Confirm email” under Authentication → Sign In / Providers → Email.");
           return;
         }
+      }
+      try {
+        const res = await ensureStudentNumber({ data: {} as never });
+        if (res?.studentNumber) toast.success(`Your student number is ${res.studentNumber}`);
+      } catch {
+        // Number will be allocated on next load if this call fails.
       }
       setLoading(false);
       toast.success("Account created — you're signed in"); onDone();
