@@ -31,6 +31,10 @@ function Dashboard() {
     return <AdminDashboard name={name} />;
   }
 
+  if (isStudent && me?.userId) {
+    return <StudentDashboard userId={me.userId} name={name} />;
+  }
+
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
@@ -39,11 +43,10 @@ function Dashboard() {
           Role{roles.length > 1 ? "s" : ""}: {roles.join(", ") || "student"}
         </p>
       </div>
-
-      {isStudent && me?.userId && <StudentDashboard userId={me.userId} />}
     </div>
   );
 }
+
 
 function AdminDashboard({ name }: { name: string }) {
   const fetchUsers = useServerFn(listAllUsers);
