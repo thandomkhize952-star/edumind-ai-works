@@ -66,3 +66,42 @@ export const deleteUser = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const createStaffUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z
+      .object({
+        email: z.string().email(),
+        password: z.string().min(6),
+        fullName: z.string().min(1),
+        role: z.enum(["lecturer", "admin"]).default("lecturer"),
+      })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { full_name: data.fullName, role: data.role },
+    });
+    if (error || !created.user) throw new Error(error?.message ?? "Could not create the account");
+
+    const newId = created.user.id;
+    await supabaseAdmin
+      .from("profiles")
+      .upsert({ id: newId, email: data.email, full_name: data.fullName }, { onConflict: "id" });
+
+    // Staff accounts must not carry the default student role or a student number.
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", newId).eq("role", "student");
+    await supabaseAdmin.from("profiles").update({ student_number: null }).eq("id", newId);
+    await supabaseAdmin
+      .from("user_roles")
+      .upsert({ user_id: newId, role: data.role }, { onConflict: "user_id,role" });
+
+    return { userId: newId };
+  });
