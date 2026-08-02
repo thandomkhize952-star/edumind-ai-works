@@ -83,7 +83,13 @@ function AuthedShell() {
           { to: "/admin/enrollments", label: "Enrollments", icon: CalendarCheck },
         ],
       },
-      { label: "Insights", items: [{ to: "/admin/analytics", label: "Analytics", icon: BarChart3 }] },
+      {
+        label: "Insights",
+        items: [
+          { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
+          { to: "/admin/reports", label: "Reports", icon: FileSpreadsheet },
+        ],
+      },
     );
   }
 
