@@ -40,7 +40,7 @@ export const aiChat = createServerFn({ method: "POST" })
             apiKey: geminiKey,
             baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
             chatModel: "gemini-3.6-flash",
-            attachmentModel: "gemini-3.1-pro",
+            attachmentModel: "gemini-3.6-flash", // free tier: Pro models are paid-only, keep both paths on Flash
           }
         : null;
 
@@ -122,6 +122,9 @@ STRICT RULES
       .order("created_at");
 
     const isImage = data.attachment?.mimeType.startsWith("image/");
+    const isNonImageAttachment = data.attachment && !isImage;
+    const useGeminiNativeForAttachment = isNonImageAttachment && !lovableKey;
+
     const userContent = data.attachment
       ? [
           { type: "text" as const, text: data.message },
@@ -150,30 +153,71 @@ STRICT RULES
       content: data.attachment ? `${data.message}\n\n📎 Attached: ${data.attachment.name}` : data.message,
     });
 
-    const body: Record<string, unknown> = data.attachment
-      ? { model: provider.attachmentModel, ...(lovableKey ? { reasoning_effort: "none" } : {}), messages }
-      : { model: provider.chatModel, messages };
+    let reply = "";
 
-    // Call the resolved provider's OpenAI-compatible chat completions endpoint
-    const res = await fetch(provider.baseUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${provider.apiKey}`,
-      },
-      body: JSON.stringify(body),
-    });
+    if (useGeminiNativeForAttachment) {
+      // Gemini's OpenAI-compatible endpoint rejects `type: "file"` content parts, so
+      // non-image attachments (e.g. PDFs) go through Gemini's native API instead.
+      const base64Data = data.attachment!.dataUrl.split(",").pop() ?? "";
+      const systemText = String(messages[0].content);
+      const contents = [
+        ...(history ?? []).map((m) => ({
+          role: m.role === "assistant" ? ("model" as const) : ("user" as const),
+          parts: [{ text: String(m.content) }],
+        })),
+        {
+          role: "user" as const,
+          parts: [
+            { text: data.message },
+            { inline_data: { mime_type: data.attachment!.mimeType, data: base64Data } },
+          ],
+        },
+      ];
 
-    if (!res.ok) {
-      const text = await res.text();
-      if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
-      if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace settings.");
-      throw new Error(`AI error: ${text.slice(0, 200)}`);
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${provider.attachmentModel}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": provider.apiKey },
+          body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents }),
+        },
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
+      }
+      const json = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      reply = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
+    } else {
+      const body: Record<string, unknown> = data.attachment
+        ? { model: provider.attachmentModel, ...(lovableKey ? { reasoning_effort: "none" } : {}), messages }
+        : { model: provider.chatModel, messages };
+
+      // Call the resolved provider's OpenAI-compatible chat completions endpoint
+      const res = await fetch(provider.baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider.apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace settings.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
+      }
+      const json = (await res.json()) as {
+        choices: { message: { content: string } }[];
+      };
+      reply = json.choices?.[0]?.message?.content ?? "";
     }
-    const json = (await res.json()) as {
-      choices: { message: { content: string } }[];
-    };
-    const reply = json.choices?.[0]?.message?.content ?? "";
 
     await supabase.from("ai_messages").insert({ chat_id: chatId, role: "assistant", content: reply });
 
