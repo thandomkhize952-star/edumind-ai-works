@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCurrentUserContext } from "@/lib/user.functions";
-import { GraduationCap, LayoutDashboard, Users, BookOpen, Layers, ClipboardList, FileText, Brain, UserCog, LogOut, CalendarCheck, Library, AlertTriangle, Bell, BarChart3 } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Users, BookOpen, Layers, ClipboardList, FileText, Brain, UserCog, LogOut, CalendarCheck, Library, AlertTriangle, Bell, BarChart3, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
