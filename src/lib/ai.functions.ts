@@ -22,8 +22,29 @@ export const aiChat = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const apiKey = process.env.LOVABLE_API_KEY;
-    if (!apiKey) throw new Error("AI is not configured");
+
+    // Prefer Lovable's AI gateway when running on Lovable (key is auto-injected there).
+    // Fall back to calling Gemini directly when it's not present (e.g. on Vercel).
+    const lovableKey = process.env.LOVABLE_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
+
+    const provider = lovableKey
+      ? {
+          apiKey: lovableKey,
+          baseUrl: "https://ai.gateway.lovable.dev/v1/chat/completions",
+          chatModel: "google/gemini-3-flash-preview",
+          attachmentModel: "openai/gpt-5.6-sol",
+        }
+      : geminiKey
+        ? {
+            apiKey: geminiKey,
+            baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+            chatModel: "gemini-3.6-flash",
+            attachmentModel: "gemini-3.1-pro",
+          }
+        : null;
+
+    if (!provider) throw new Error("AI is not configured");
 
     // ---- Course scope: what the student is actually registered for ----
     const { data: enrollments } = await supabase
@@ -130,15 +151,15 @@ STRICT RULES
     });
 
     const body: Record<string, unknown> = data.attachment
-      ? { model: "openai/gpt-5.6-sol", reasoning_effort: "none", messages }
-      : { model: "google/gemini-3-flash-preview", messages };
+      ? { model: provider.attachmentModel, ...(lovableKey ? { reasoning_effort: "none" } : {}), messages }
+      : { model: provider.chatModel, messages };
 
-    // Call Lovable AI Gateway directly (OpenAI-compatible)
-    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    // Call the resolved provider's OpenAI-compatible chat completions endpoint
+    const res = await fetch(provider.baseUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Bearer ${provider.apiKey}`,
       },
       body: JSON.stringify(body),
     });
