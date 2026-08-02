@@ -79,7 +79,10 @@ function MyMarks() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
-      <h1 className="text-3xl font-bold">My Marks</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-3xl font-bold">My Marks</h1>
+        <TranscriptButton />
+      </div>
       <Card>
         <CardHeader><CardTitle>Average: {avg}%</CardTitle></CardHeader>
         <CardContent>
