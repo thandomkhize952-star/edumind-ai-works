@@ -32,7 +32,19 @@ export const getAssessmentForStudent = createServerFn({ method: "POST" })
       .eq("student_id", userId)
       .maybeSingle();
 
-    return { assessment: a, questions: qs ?? [], submission: sub };
+    // Reveal correct answers only after the student has submitted an auto-marked assessment
+    const revealAnswers = !!sub && (a.type === "quiz" || a.type === "test");
+    let questions: any[] = qs ?? [];
+    if (revealAnswers) {
+      const { data: full } = await supabaseAdmin
+        .from("assessment_questions")
+        .select("id, position, question, options, marks, correct_index")
+        .eq("assessment_id", data.assessmentId)
+        .order("position");
+      questions = full ?? questions;
+    }
+
+    return { assessment: a, questions, submission: sub, revealAnswers };
   });
 
 // Submit + auto-grade MCQ
