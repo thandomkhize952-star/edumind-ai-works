@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getLecturerModuleDetail, getModuleSubmissions } from "@/lib/lecturer.functions";
+import { getLecturerModuleDetail, getAssessmentReview } from "@/lib/lecturer.functions";
 import { getMaterialUrl, uploadMaterial, deleteMaterial } from "@/lib/materials.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Download, FileUp, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Download, Eye, FileUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/lecturer/modules/$id")({
   component: ModuleDetail,
 });
 
-type QDraft = { question: string; options: string[]; correct_index: number; marks: number };
+type QDraft = { question: string; options: string[]; correct_index: number; marks: number; answer_text: string };
 
 function ModuleDetail() {
   const { id } = Route.useParams();
@@ -284,7 +284,7 @@ function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: s
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader><DialogTitle>Review submissions</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          {data?.submissions.map(s => (
+          {data?.submissions.map((s: any) => (
             <SubmissionReview
               key={s.id}
               s={s}
