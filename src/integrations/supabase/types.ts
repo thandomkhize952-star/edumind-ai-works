@@ -69,6 +69,7 @@ export type Database = {
       }
       assessment_questions: {
         Row: {
+          answer_text: string | null
           assessment_id: string
           correct_index: number
           id: string
@@ -78,6 +79,7 @@ export type Database = {
           question: string
         }
         Insert: {
+          answer_text?: string | null
           assessment_id: string
           correct_index?: number
           id?: string
@@ -87,6 +89,7 @@ export type Database = {
           question: string
         }
         Update: {
+          answer_text?: string | null
           assessment_id?: string
           correct_index?: number
           id?: string
@@ -114,6 +117,7 @@ export type Database = {
           id: string
           module_id: string
           published: boolean
+          time_limit_minutes: number | null
           title: string
           total_marks: number
           type: Database["public"]["Enums"]["assessment_type"]
@@ -126,6 +130,7 @@ export type Database = {
           id?: string
           module_id: string
           published?: boolean
+          time_limit_minutes?: number | null
           title: string
           total_marks?: number
           type: Database["public"]["Enums"]["assessment_type"]
@@ -138,6 +143,7 @@ export type Database = {
           id?: string
           module_id?: string
           published?: boolean
+          time_limit_minutes?: number | null
           title?: string
           total_marks?: number
           type?: Database["public"]["Enums"]["assessment_type"]

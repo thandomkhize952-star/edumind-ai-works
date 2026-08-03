@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getLecturerModuleDetail, getModuleSubmissions } from "@/lib/lecturer.functions";
+import { getLecturerModuleDetail, getAssessmentReview } from "@/lib/lecturer.functions";
 import { getMaterialUrl, uploadMaterial, deleteMaterial } from "@/lib/materials.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { ArrowLeft, Download, FileUp, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Download, Eye, FileUp, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/lecturer/modules/$id")({
   component: ModuleDetail,
 });
 
-type QDraft = { question: string; options: string[]; correct_index: number; marks: number };
+type QDraft = { question: string; options: string[]; correct_index: number; marks: number; answer_text: string };
 
 function ModuleDetail() {
   const { id } = Route.useParams();
@@ -87,7 +87,15 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
   const [type, setType] = useState<"quiz" | "test" | "exam" | "assignment">("quiz");
   const [description, setDescription] = useState("");
   const [dueAt, setDueAt] = useState("");
-  const [questions, setQuestions] = useState<QDraft[]>([{ question: "", options: ["", "", "", ""], correct_index: 0, marks: 1 }]);
+  const [timeLimit, setTimeLimit] = useState<string>("30");
+  const [questions, setQuestions] = useState<QDraft[]>([blankQuestion()]);
+
+  const isAssignment = type === "assignment";
+
+  function resetForm() {
+    setTitle(""); setDescription(""); setDueAt(""); setTimeLimit("30");
+    setQuestions([blankQuestion()]);
+  }
 
   const create = useMutation({
     mutationFn: async () => {
@@ -103,18 +111,27 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
         due_at: dueAt || null,
         total_marks: total,
         published: false,
+        time_limit_minutes: isAssignment ? null : (timeLimit ? Number(timeLimit) : null),
       }).select().single();
       if (error) throw error;
       if (questions.length) {
-        const rows = questions.map((q, i) => ({ assessment_id: a.id, position: i, question: q.question, options: q.options, correct_index: q.correct_index, marks: q.marks }));
+        const rows = questions.map((q, i) => ({
+          assessment_id: a.id,
+          position: i,
+          question: q.question,
+          options: isAssignment ? [] : q.options,
+          correct_index: isAssignment ? 0 : q.correct_index,
+          answer_text: isAssignment ? (q.answer_text || null) : null,
+          marks: q.marks,
+        }));
         const { error: qe } = await supabase.from("assessment_questions").insert(rows);
         if (qe) throw qe;
       }
     },
     onSuccess: () => {
       toast.success("Assessment created");
-      setOpen(false); setTitle(""); setDescription(""); setDueAt("");
-      setQuestions([{ question: "", options: ["", "", "", ""], correct_index: 0, marks: 1 }]);
+      setOpen(false);
+      resetForm();
       onChanged();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -151,7 +168,7 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
                 <div><Label>Title</Label><Input value={title} onChange={(e) => setTitle(e.target.value)} /></div>
                 <div>
                   <Label>Type</Label>
-                  <Select value={type} onValueChange={(v: any) => setType(v)}>
+                  <Select value={type} onValueChange={(v: any) => { setType(v); setQuestions([blankQuestion()]); }}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="quiz">Quiz</SelectItem>
@@ -163,10 +180,20 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
                 </div>
               </div>
               <div><Label>Description</Label><Textarea rows={2} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-              <div><Label>Due (optional)</Label><Input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><Label>Due (optional)</Label><Input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} /></div>
+                {!isAssignment && (
+                  <div>
+                    <Label className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Time limit (minutes)</Label>
+                    <Input type="number" min={1} placeholder="e.g. 30" value={timeLimit} onChange={(e) => setTimeLimit(e.target.value)} />
+                    <p className="mt-1 text-xs text-muted-foreground">Leave blank for no limit. The student's attempt auto-submits when time runs out.</p>
+                  </div>
+                )}
+              </div>
               <div className="space-y-3 border-t pt-3">
-                <div className="flex items-center justify-between"><Label>Questions (multiple choice)</Label>
-                  <Button size="sm" variant="outline" onClick={() => setQuestions(q => [...q, { question: "", options: ["", "", "", ""], correct_index: 0, marks: 1 }])}><Plus className="mr-1 h-3 w-3" /> Add</Button>
+                <div className="flex items-center justify-between">
+                  <Label>{isAssignment ? "Questions (written answer)" : "Questions (multiple choice)"}</Label>
+                  <Button size="sm" variant="outline" onClick={() => setQuestions(q => [...q, blankQuestion()])}><Plus className="mr-1 h-3 w-3" /> Add</Button>
                 </div>
                 {questions.map((q, qi) => (
                   <div key={qi} className="space-y-2 rounded-md border p-3">
@@ -175,12 +202,24 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
                       <Button size="sm" variant="ghost" onClick={() => setQuestions(arr => arr.filter((_, i) => i !== qi))}><Trash2 className="h-3 w-3" /></Button>
                     </div>
                     <Textarea placeholder="Question" rows={2} value={q.question} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, question: e.target.value } : x))} />
-                    {q.options.map((opt, oi) => (
-                      <div key={oi} className="flex items-center gap-2">
-                        <input type="radio" name={`correct-${qi}`} checked={q.correct_index === oi} onChange={() => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, correct_index: oi } : x))} />
-                        <Input placeholder={`Option ${oi + 1}`} value={opt} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, options: x.options.map((o, j) => j === oi ? e.target.value : o) } : x))} />
+                    {isAssignment ? (
+                      <div>
+                        <Label className="text-xs">Model answer / marking notes (optional, not shown to students)</Label>
+                        <Textarea
+                          rows={3}
+                          placeholder="Expected answer used when reviewing submissions"
+                          value={q.answer_text}
+                          onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, answer_text: e.target.value } : x))}
+                        />
                       </div>
-                    ))}
+                    ) : (
+                      q.options.map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          <input type="radio" name={`correct-${qi}`} checked={q.correct_index === oi} onChange={() => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, correct_index: oi } : x))} />
+                          <Input placeholder={`Option ${oi + 1}`} value={opt} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, options: x.options.map((o, j) => j === oi ? e.target.value : o) } : x))} />
+                        </div>
+                      ))
+                    )}
                     <div className="flex items-center gap-2"><Label className="text-xs">Marks</Label><Input type="number" className="w-24" value={q.marks} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, marks: Number(e.target.value) } : x))} /></div>
                   </div>
                 ))}
@@ -192,22 +231,23 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
       </CardHeader>
       <CardContent>
         <Table>
-          <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Marks</TableHead><TableHead>Due</TableHead><TableHead>Published</TableHead><TableHead></TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Title</TableHead><TableHead>Type</TableHead><TableHead>Marks</TableHead><TableHead>Time limit</TableHead><TableHead>Due</TableHead><TableHead>Published</TableHead><TableHead></TableHead></TableRow></TableHeader>
           <TableBody>
             {assessments.map(a => (
               <TableRow key={a.id}>
                 <TableCell className="font-medium">{a.title}</TableCell>
                 <TableCell><Badge variant="secondary" className="capitalize">{a.type}</Badge></TableCell>
                 <TableCell>{a.total_marks}</TableCell>
+                <TableCell className="text-muted-foreground">{a.time_limit_minutes ? `${a.time_limit_minutes} min` : "—"}</TableCell>
                 <TableCell className="text-muted-foreground">{a.due_at ? new Date(a.due_at).toLocaleString() : "—"}</TableCell>
                 <TableCell><Switch checked={a.published} onCheckedChange={() => togglePublish.mutate(a)} /></TableCell>
                 <TableCell className="text-right">
-                  <SubmissionsButton assessmentId={a.id} totalMarks={a.total_marks} onChanged={onChanged} />
+                  <ReviewButton assessmentId={a.id} totalMarks={a.total_marks} onChanged={onChanged} />
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete assessment?")) remove.mutate(a.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>
             ))}
-            {!assessments.length && <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">No assessments yet.</TableCell></TableRow>}
+            {!assessments.length && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">No assessments yet.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </CardContent>
@@ -215,12 +255,16 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
   );
 }
 
-function SubmissionsButton({ assessmentId, totalMarks, onChanged }: { assessmentId: string; totalMarks: number; onChanged: () => void }) {
+function blankQuestion(): QDraft {
+  return { question: "", options: ["", "", "", ""], correct_index: 0, marks: 1, answer_text: "" };
+}
+
+function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: string; totalMarks: number; onChanged: () => void }) {
   const [open, setOpen] = useState(false);
-  const get = useServerFn(getModuleSubmissions);
+  const get = useServerFn(getAssessmentReview);
   const qc = useQueryClient();
-  const { data: subs, refetch } = useQuery({
-    queryKey: ["submissions", assessmentId],
+  const { data, refetch } = useQuery({
+    queryKey: ["assessment-review", assessmentId],
     queryFn: () => get({ data: { assessmentId } }),
     enabled: open,
   });
@@ -236,33 +280,92 @@ function SubmissionsButton({ assessmentId, totalMarks, onChanged }: { assessment
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="ghost">Grade</Button></DialogTrigger>
+      <DialogTrigger asChild><Button size="sm" variant="ghost"><Eye className="mr-1 h-4 w-4" /> Review &amp; grade</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Submissions</DialogTitle></DialogHeader>
-        <Table>
-          <TableHeader><TableRow><TableHead>Student</TableHead><TableHead>Score</TableHead><TableHead>Feedback</TableHead><TableHead></TableHead></TableRow></TableHeader>
-          <TableBody>
-            {subs?.map(s => <SubmissionRow key={s.id} s={s} totalMarks={totalMarks} onSave={(score, feedback) => update.mutate({ id: s.id, score, feedback })} />)}
-            {subs && !subs.length && <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No submissions.</TableCell></TableRow>}
-          </TableBody>
-        </Table>
+        <DialogHeader><DialogTitle>Review submissions</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          {data?.submissions.map((s: any) => (
+            <SubmissionReview
+              key={s.id}
+              s={s}
+              questions={data.questions}
+              totalMarks={totalMarks}
+              onSave={(score, feedback) => update.mutate({ id: s.id, score, feedback })}
+            />
+          ))}
+          {data && !data.submissions.length && <p className="text-center text-muted-foreground">No submissions yet.</p>}
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function SubmissionRow({ s, totalMarks, onSave }: { s: any; totalMarks: number; onSave: (score: number, feedback: string) => void }) {
+function SubmissionReview({ s, questions, totalMarks, onSave }: { s: any; questions: any[]; totalMarks: number; onSave: (score: number, feedback: string) => void }) {
   const [score, setScore] = useState(s.score ?? 0);
   const [feedback, setFeedback] = useState(s.feedback ?? "");
+  const [showAnswers, setShowAnswers] = useState(false);
+  const answers = (s.answers ?? {}) as Record<string, number | string>;
+
   return (
-    <TableRow>
-      <TableCell><div className="font-medium">{s.student?.full_name || "—"}</div><div className="text-xs text-muted-foreground">{s.student?.email}</div></TableCell>
-      <TableCell><div className="flex items-center gap-1"><Input type="number" className="w-20" value={score} onChange={(e) => setScore(Number(e.target.value))} /><span className="text-sm text-muted-foreground">/ {totalMarks}</span></div></TableCell>
-      <TableCell><Textarea rows={1} value={feedback} onChange={(e) => setFeedback(e.target.value)} /></TableCell>
-      <TableCell><Button size="sm" onClick={() => onSave(Number(score), feedback)}>Save</Button></TableCell>
-    </TableRow>
+    <div className="rounded-lg border p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="font-medium">{s.student?.full_name || "—"}</div>
+          <div className="text-xs text-muted-foreground">{s.student?.student_number ? `${s.student.student_number} · ` : ""}{s.student?.email}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          {s.graded_at ? <Badge variant="secondary">Graded</Badge> : <Badge>Awaiting grading</Badge>}
+          <Button size="sm" variant="outline" onClick={() => setShowAnswers(v => !v)}>
+            <Eye className="mr-1 h-3.5 w-3.5" /> {showAnswers ? "Hide answers" : "View answers"}
+          </Button>
+        </div>
+      </div>
+
+      {showAnswers && (
+        <div className="mt-3 space-y-3 border-t pt-3">
+          {questions.map((q, i) => {
+            const opts = Array.isArray(q.options) ? (q.options as string[]) : [];
+            const isMCQ = opts.length > 0;
+            const val = answers[q.id];
+            const correct = isMCQ && val === q.correct_index;
+            return (
+              <div key={q.id} className="rounded-md bg-muted/40 p-3 text-sm">
+                <p className="font-medium">Q{i + 1}. {q.question} <span className="text-xs text-muted-foreground">({q.marks} marks)</span></p>
+                <p className="mt-1"><span className="text-muted-foreground">Student answer: </span>
+                  {val === undefined || val === "" ? <span className="italic text-muted-foreground">No answer</span>
+                    : isMCQ ? <span className={correct ? "text-success" : "text-destructive"}>{opts[Number(val)] ?? String(val)}</span>
+                    : <span className="whitespace-pre-wrap">{String(val)}</span>}
+                </p>
+                {isMCQ ? (
+                  <p className="mt-1 text-xs text-muted-foreground">Correct answer: {opts[q.correct_index]}</p>
+                ) : q.answer_text ? (
+                  <p className="mt-1 whitespace-pre-wrap text-xs text-muted-foreground">Model answer: {q.answer_text}</p>
+                ) : null}
+              </div>
+            );
+          })}
+          {!questions.length && <p className="text-sm text-muted-foreground">No questions on this assessment.</p>}
+        </div>
+      )}
+
+      <div className="mt-3 grid gap-2 border-t pt-3 sm:grid-cols-[140px_1fr_auto] sm:items-end">
+        <div>
+          <Label className="text-xs">Score</Label>
+          <div className="flex items-center gap-1">
+            <Input type="number" className="w-20" value={score} onChange={(e) => setScore(Number(e.target.value))} />
+            <span className="text-sm text-muted-foreground">/ {totalMarks}</span>
+          </div>
+        </div>
+        <div>
+          <Label className="text-xs">Feedback</Label>
+          <Textarea rows={2} value={feedback} onChange={(e) => setFeedback(e.target.value)} />
+        </div>
+        <Button size="sm" onClick={() => onSave(Number(score), feedback)}>Save</Button>
+      </div>
+    </div>
   );
 }
+
 
 /* -------------------- Materials -------------------- */
 
