@@ -52,6 +52,8 @@ export const setUserRole = createServerFn({ method: "POST" })
         .eq("user_id", data.userId)
         .eq("role", data.role);
     }
+    const { syncRoleTables } = await import("./role-tables.server");
+    await syncRoleTables(data.userId);
     return { ok: true };
   });
 
@@ -102,6 +104,9 @@ export const createStaffUser = createServerFn({ method: "POST" })
     await supabaseAdmin
       .from("user_roles")
       .upsert({ user_id: newId, role: data.role }, { onConflict: "user_id,role" });
+
+    const { syncRoleTables } = await import("./role-tables.server");
+    await syncRoleTables(newId);
 
     return { userId: newId };
   });
