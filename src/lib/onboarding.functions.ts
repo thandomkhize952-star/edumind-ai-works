@@ -23,8 +23,16 @@ export const ensureStudentNumber = createServerFn({ method: "POST" })
 
     const roleList = (roles ?? []).map((r) => r.role);
     const isStudent = roleList.length === 0 || roleList.includes("student");
-    if (!isStudent) return { studentNumber: null };
-    if (profile?.student_number) return { studentNumber: profile.student_number };
+    if (!isStudent) {
+      const { syncRoleTables } = await import("./role-tables.server");
+      await syncRoleTables(userId);
+      return { studentNumber: null };
+    }
+    if (profile?.student_number) {
+      const { syncRoleTables } = await import("./role-tables.server");
+      await syncRoleTables(userId);
+      return { studentNumber: profile.student_number };
+    }
 
     const { data: latest } = await supabaseAdmin
       .from("profiles")
@@ -50,7 +58,11 @@ export const ensureStudentNumber = createServerFn({ method: "POST" })
         .from("profiles")
         .update({ student_number: candidate })
         .eq("id", userId);
-      if (!error) return { studentNumber: candidate };
+      if (!error) {
+        const { syncRoleTables } = await import("./role-tables.server");
+        await syncRoleTables(userId);
+        return { studentNumber: candidate };
+      }
     }
 
     return { studentNumber: null };
