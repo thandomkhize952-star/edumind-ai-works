@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Clock } from "lucide-react";
+import { Check, Clock, X } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/assessments/$id")({
   component: TakeAssessment,
@@ -63,6 +63,7 @@ function TakeAssessment() {
   const submitted = !!data.submission;
   const autoGrade = data.assessment.type === "quiz" || data.assessment.type === "test";
   const savedAnswers = (data.submission?.answers ?? {}) as Record<string, number | string>;
+  const reveal = !!(data as any).revealAnswers;
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 p-6">
@@ -105,10 +106,38 @@ function TakeAssessment() {
           <Card key={q.id}>
             <CardHeader>
               <CardTitle className="text-base">Q{i + 1}. {q.question}</CardTitle>
-              <CardDescription>{q.marks} marks</CardDescription>
+              <CardDescription>
+                {q.marks} marks
+                {isMCQ && reveal && (
+                  Number(currentVal) === (q as any).correct_index
+                    ? <span className="ml-2 font-medium text-success">Correct</span>
+                    : <span className="ml-2 font-medium text-destructive">Incorrect</span>
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              {isMCQ ? (
+              {isMCQ && reveal ? (
+                <div className="space-y-2">
+                  {opts.map((o, idx) => {
+                    const chosen = Number(currentVal) === idx;
+                    const isCorrect = (q as any).correct_index === idx;
+                    return (
+                      <div
+                        key={idx}
+                        className={`flex items-center gap-2 rounded-md border p-3 ${
+                          isCorrect ? "border-success bg-success/10" : chosen ? "border-destructive bg-destructive/10" : ""
+                        }`}
+                      >
+                        {isCorrect ? <Check className="h-4 w-4 text-success" /> : chosen ? <X className="h-4 w-4 text-destructive" /> : <span className="h-4 w-4" />}
+                        <span>{o}</span>
+                        {chosen && <Badge variant="secondary" className="ml-auto">Your answer</Badge>}
+                        {isCorrect && !chosen && <Badge variant="secondary" className="ml-auto">Correct answer</Badge>}
+                      </div>
+                    );
+                  })}
+                  {currentVal === undefined && <p className="text-sm italic text-muted-foreground">You did not answer this question.</p>}
+                </div>
+              ) : isMCQ ? (
                 <RadioGroup
                   disabled={submitted}
                   value={currentVal !== undefined ? String(currentVal) : ""}

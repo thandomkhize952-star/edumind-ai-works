@@ -242,7 +242,7 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
                 <TableCell className="text-muted-foreground">{a.due_at ? new Date(a.due_at).toLocaleString() : "—"}</TableCell>
                 <TableCell><Switch checked={a.published} onCheckedChange={() => togglePublish.mutate(a)} /></TableCell>
                 <TableCell className="text-right">
-                  <ReviewButton assessmentId={a.id} totalMarks={a.total_marks} onChanged={onChanged} />
+                  <ReviewButton assessmentId={a.id} totalMarks={a.total_marks} type={a.type} onChanged={onChanged} />
                   <Button size="sm" variant="ghost" onClick={() => { if (confirm("Delete assessment?")) remove.mutate(a.id); }}><Trash2 className="h-4 w-4" /></Button>
                 </TableCell>
               </TableRow>
@@ -259,7 +259,8 @@ function blankQuestion(): QDraft {
   return { question: "", options: ["", "", "", ""], correct_index: 0, marks: 1, answer_text: "" };
 }
 
-function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: string; totalMarks: number; onChanged: () => void }) {
+function ReviewButton({ assessmentId, totalMarks, type, onChanged }: { assessmentId: string; totalMarks: number; type: string; onChanged: () => void }) {
+  const autoGraded = type === "quiz" || type === "test";
   const [open, setOpen] = useState(false);
   const get = useServerFn(getAssessmentReview);
   const qc = useQueryClient();
@@ -280,9 +281,9 @@ function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: s
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild><Button size="sm" variant="ghost"><Eye className="mr-1 h-4 w-4" /> Review &amp; grade</Button></DialogTrigger>
+      <DialogTrigger asChild><Button size="sm" variant="ghost"><Eye className="mr-1 h-4 w-4" /> {autoGraded ? "Review" : "Review & grade"}</Button></DialogTrigger>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader><DialogTitle>Review submissions</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle>{autoGraded ? "Review submissions (auto-marked)" : "Review submissions"}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           {data?.submissions.map((s: any) => (
             <SubmissionReview
@@ -290,6 +291,7 @@ function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: s
               s={s}
               questions={data.questions}
               totalMarks={totalMarks}
+              canGrade={!autoGraded}
               onSave={(score, feedback) => update.mutate({ id: s.id, score, feedback })}
             />
           ))}
@@ -300,7 +302,7 @@ function ReviewButton({ assessmentId, totalMarks, onChanged }: { assessmentId: s
   );
 }
 
-function SubmissionReview({ s, questions, totalMarks, onSave }: { s: any; questions: any[]; totalMarks: number; onSave: (score: number, feedback: string) => void }) {
+function SubmissionReview({ s, questions, totalMarks, canGrade, onSave }: { s: any; questions: any[]; totalMarks: number; canGrade: boolean; onSave: (score: number, feedback: string) => void }) {
   const [score, setScore] = useState(s.score ?? 0);
   const [feedback, setFeedback] = useState(s.feedback ?? "");
   const [showAnswers, setShowAnswers] = useState(false);
@@ -314,7 +316,9 @@ function SubmissionReview({ s, questions, totalMarks, onSave }: { s: any; questi
           <div className="text-xs text-muted-foreground">{s.student?.student_number ? `${s.student.student_number} · ` : ""}{s.student?.email}</div>
         </div>
         <div className="flex items-center gap-2">
-          {s.graded_at ? <Badge variant="secondary">Graded</Badge> : <Badge>Awaiting grading</Badge>}
+          {canGrade
+            ? (s.graded_at ? <Badge variant="secondary">Graded</Badge> : <Badge>Awaiting grading</Badge>)
+            : <Badge variant="secondary">Auto-marked: {s.score ?? 0} / {totalMarks}</Badge>}
           <Button size="sm" variant="outline" onClick={() => setShowAnswers(v => !v)}>
             <Eye className="mr-1 h-3.5 w-3.5" /> {showAnswers ? "Hide answers" : "View answers"}
           </Button>
@@ -348,6 +352,7 @@ function SubmissionReview({ s, questions, totalMarks, onSave }: { s: any; questi
         </div>
       )}
 
+      {canGrade && (
       <div className="mt-3 grid gap-2 border-t pt-3 sm:grid-cols-[140px_1fr_auto] sm:items-end">
         <div>
           <Label className="text-xs">Score</Label>
@@ -362,6 +367,7 @@ function SubmissionReview({ s, questions, totalMarks, onSave }: { s: any; questi
         </div>
         <Button size="sm" onClick={() => onSave(Number(score), feedback)}>Save</Button>
       </div>
+      )}
     </div>
   );
 }
