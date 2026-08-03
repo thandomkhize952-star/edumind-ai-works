@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { Clock } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/assessments/$id")({
   component: TakeAssessment,
@@ -36,6 +37,28 @@ function TakeAssessment() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const limit = (data?.assessment as any)?.time_limit_minutes as number | null | undefined;
+  const timed = !!limit && !data?.submission;
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const autoSubmitted = useRef(false);
+
+  useEffect(() => {
+    if (!timed || !limit) return;
+    setSecondsLeft(limit * 60);
+    const t = setInterval(() => {
+      setSecondsLeft((v) => (v === null ? v : Math.max(0, v - 1)));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [timed, limit]);
+
+  useEffect(() => {
+    if (secondsLeft === 0 && !autoSubmitted.current && timed) {
+      autoSubmitted.current = true;
+      toast.warning("Time is up — submitting your attempt.");
+      m.mutate();
+    }
+  }, [secondsLeft, timed]);
+
   if (isLoading || !data) return <div className="p-6"><Skeleton className="h-96 w-full" /></div>;
   const submitted = !!data.submission;
   const autoGrade = data.assessment.type === "quiz" || data.assessment.type === "test";
@@ -48,7 +71,14 @@ function TakeAssessment() {
           <CardTitle>{data.assessment.title}</CardTitle>
           <CardDescription className="capitalize">
             {data.assessment.type} · {data.assessment.total_marks} marks · {autoGrade ? "Auto-marked" : "Marked by lecturer"}
+            {limit ? ` · ${limit} min time limit` : ""}
           </CardDescription>
+          {timed && secondsLeft !== null && (
+            <Badge variant={secondsLeft < 60 ? "destructive" : "secondary"} className="w-fit gap-1">
+              <Clock className="h-3.5 w-3.5" />
+              {String(Math.floor(secondsLeft / 60)).padStart(2, "0")}:{String(secondsLeft % 60).padStart(2, "0")} remaining
+            </Badge>
+          )}
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">{data.assessment.description || "—"}</p>
