@@ -27,7 +27,6 @@ function LecturerProfile() {
   });
 
   const [form, setForm] = useState({ full_name: "", phone: "", bio: "", email: "" });
-  const [initialEmail, setInitialEmail] = useState("");
 
   useEffect(() => {
     if (data) {
@@ -37,40 +36,24 @@ function LecturerProfile() {
         bio: data.bio ?? "",
         email: data.email ?? "",
       });
-      setInitialEmail(data.email ?? "");
     }
   }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
       if (!data) return;
-      const trimmedEmail = form.email.trim();
-      const emailChanged = trimmedEmail && trimmedEmail !== initialEmail;
-
       const { error: profErr } = await supabase
         .from("profiles")
         .update({
           full_name: form.full_name,
           phone: form.phone,
           bio: form.bio,
-          ...(emailChanged ? { email: trimmedEmail } : {}),
         })
         .eq("id", data.id);
       if (profErr) throw profErr;
-
-      if (emailChanged) {
-        const { error: authErr } = await supabase.auth.updateUser({ email: trimmedEmail });
-        if (authErr) throw authErr;
-        return { emailChanged: true };
-      }
-      return { emailChanged: false };
     },
-    onSuccess: (res) => {
-      toast.success(
-        res?.emailChanged
-          ? "Profile saved. Check your new email for a confirmation link."
-          : "Profile saved",
-      );
+    onSuccess: () => {
+      toast.success("Profile saved");
       qc.invalidateQueries({ queryKey: ["my-profile"] });
       qc.invalidateQueries({ queryKey: ["me"] });
     },
@@ -92,7 +75,7 @@ function LecturerProfile() {
       <Card>
         <CardHeader>
           <CardTitle>Personal information</CardTitle>
-          <CardDescription>Changes to your email require confirmation from the new address.</CardDescription>
+          <CardDescription>Your email address is managed by the administrator and cannot be changed here.</CardDescription>
         </CardHeader>
         <CardContent>
           <form
@@ -111,17 +94,12 @@ function LecturerProfile() {
             </div>
             <div>
               <Label>Email address</Label>
-              <Input
-                type="email"
-                value={form.email}
-                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              />
-              {form.email !== initialEmail && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  You'll receive a confirmation link at the new address before the change takes effect.
-                </p>
-              )}
+              <Input type="email" value={form.email} disabled readOnly />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Contact your administrator to change your email address.
+              </p>
             </div>
+
             <div>
               <Label>Phone</Label>
               <Input

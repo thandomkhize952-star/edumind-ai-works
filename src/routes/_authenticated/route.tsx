@@ -67,7 +67,6 @@ function AuthedShell() {
           { to: "/lecturer/at-risk", label: "At-Risk Students", icon: AlertTriangle },
         ],
       },
-      { label: "AI Tutor", items: [{ to: "/student/tutor", label: "Chat with AI", icon: Brain }] },
       { label: "Account", items: [{ to: "/lecturer/profile", label: "My Profile", icon: UserCog }] },
     );
   }
