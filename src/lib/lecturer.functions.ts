@@ -70,3 +70,42 @@ export const getModuleSubmissions = createServerFn({ method: "POST" })
     const byId = Object.fromEntries((profs ?? []).map(p => [p.id, p]));
     return (subs ?? []).map(s => ({ ...s, student: byId[s.student_id] ?? null }));
   });
+
+// Full review payload: questions (with model/correct answers) + submissions with student answers
+export const getAssessmentReview = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ assessmentId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: assessment } = await supabase
+      .from("assessments")
+      .select("*")
+      .eq("id", data.assessmentId)
+      .maybeSingle();
+    if (!assessment) throw new Error("Assessment not found or not accessible");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: questions } = await supabaseAdmin
+      .from("assessment_questions")
+      .select("*")
+      .eq("assessment_id", data.assessmentId)
+      .order("position");
+
+    const { data: subs } = await supabase
+      .from("submissions")
+      .select("*")
+      .eq("assessment_id", data.assessmentId)
+      .order("submitted_at", { ascending: false });
+
+    const ids = Array.from(new Set((subs ?? []).map((s) => s.student_id)));
+    const { data: profs } = ids.length
+      ? await supabaseAdmin.from("profiles").select("id, full_name, email, student_number").in("id", ids)
+      : { data: [] };
+    const byId = Object.fromEntries((profs ?? []).map((p) => [p.id, p]));
+
+    return {
+      assessment,
+      questions: questions ?? [],
+      submissions: (subs ?? []).map((s) => ({ ...s, student: byId[s.student_id] ?? null })),
+    };
+  });
