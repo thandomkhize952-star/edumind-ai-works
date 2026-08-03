@@ -70,7 +70,7 @@ function AdminUsers() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Email</TableHead>
-                  {ROLES.map(r => <TableHead key={r} className="text-center capitalize">{r}</TableHead>)}
+                  <TableHead>Role</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -81,14 +81,15 @@ function AdminUsers() {
                     <TableRow key={u.id}>
                       <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
                       <TableCell>{u.email}</TableCell>
-                      {ROLES.map(r => (
-                        <TableCell key={r} className="text-center">
-                          <Switch
-                            checked={u.roles.includes(r)}
-                            onCheckedChange={(v) => m.mutate({ userId: u.id, role: r, enabled: v })}
-                          />
-                        </TableCell>
-                      ))}
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(u.roles.length ? ROLES.filter(r => u.roles.includes(r)) : ["student"]).map((r) => (
+                            <Badge key={r} variant={r === "admin" ? "default" : r === "lecturer" ? "secondary" : "outline"} className="capitalize">
+                              {r}
+                            </Badge>
+                          ))}
+                        </div>
+                      </TableCell>
                       <TableCell className="text-right">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
