@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { GraduationCap, BookOpen, Brain, ClipboardCheck, Upload, Play, ArrowRight } from "lucide-react";
+import { GraduationCap, BookOpen, Brain, ClipboardCheck, Upload, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
