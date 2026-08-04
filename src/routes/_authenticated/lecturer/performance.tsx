@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { getLecturerPerformance } from "@/lib/performance.functions";
+import { useState } from "react";
+import { getLecturerPerformance, type ModulePerformance } from "@/lib/performance.functions";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Users, TrendingUp, CalendarCheck } from "lucide-react";
+import { ExportFormatSelect } from "@/components/ExportFormatSelect";
+import { downloadReport, type ExportFormat, type ReportDoc } from "@/lib/report-doc";
+import { BarChart3, Users, TrendingUp, CalendarCheck, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/lecturer/performance")({
   component: PerformancePage,
@@ -18,6 +22,58 @@ function tone(pct: number | null): "default" | "secondary" | "destructive" {
   if (pct < 50) return "destructive";
   if (pct < 70) return "secondary";
   return "default";
+}
+
+function moduleDoc(mod: ModulePerformance): ReportDoc {
+  return {
+    title: `Module report — ${mod.module_code} ${mod.module_title}`,
+    meta: [
+      ["Qualification", mod.qualification ?? "—"],
+      ["Registered learners", String(mod.learners.length)],
+      ["Module average mark", mod.module_avg_mark === null ? "—" : `${mod.module_avg_mark}%`],
+      ["Module average attendance", mod.module_avg_attendance === null ? "—" : `${mod.module_avg_attendance}%`],
+      ["Generated", new Date().toLocaleString()],
+    ],
+    sections: [
+      {
+        heading: "Registered learners",
+        head: [
+          "Student number",
+          "Name",
+          "Email",
+          "Average mark (%)",
+          "Graded assessments",
+          "Attendance (%)",
+          "Classes recorded",
+        ],
+        body: mod.learners.map((l) => [
+          l.student_number ?? "—",
+          l.full_name ?? "—",
+          l.email ?? "—",
+          l.avg_mark_pct ?? "—",
+          l.graded_count,
+          l.attendance_pct ?? "—",
+          l.attendance_count,
+        ]),
+      },
+    ],
+  };
+}
+
+function ModuleDownload({ mod }: { mod: ModulePerformance }) {
+  const [format, setFormat] = useState<ExportFormat>("csv");
+  return (
+    <div className="flex items-end gap-2">
+      <ExportFormatSelect value={format} onChange={setFormat} label={null} />
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => downloadReport(`module-report-${mod.module_code}`, format, moduleDoc(mod))}
+      >
+        <Download className="mr-2 h-4 w-4" /> Download
+      </Button>
+    </div>
+  );
 }
 
 function PerformancePage() {
@@ -60,7 +116,7 @@ function PerformancePage() {
                 </CardTitle>
                 <CardDescription>{mod.qualification}</CardDescription>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="gap-1">
                   <Users className="h-3 w-3" /> {mod.learners.length} learners
                 </Badge>
@@ -70,6 +126,7 @@ function PerformancePage() {
                 <Badge variant={tone(mod.module_avg_attendance)} className="gap-1">
                   <CalendarCheck className="h-3 w-3" /> Avg attendance: {mod.module_avg_attendance ?? "—"}%
                 </Badge>
+                <ModuleDownload mod={mod} />
               </div>
             </div>
           </CardHeader>
