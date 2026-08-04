@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, BookMarked, BookOpen, CheckCircle2, Circle, Clock, Flag, CalendarDays,
-  Hourglass, LineChart, Lightbulb, Check,
+  Hourglass, LineChart, Lightbulb, Check, Play, RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
