@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCurrentUserContext } from "@/lib/user.functions";
+import { getMyNotifications } from "@/lib/at-risk.functions";
 import { GraduationCap, LayoutDashboard, Users, BookOpen, Layers, ClipboardList, FileText, Brain, UserCog, LogOut, CalendarCheck, Library, AlertTriangle, Bell, BarChart3, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -24,12 +25,20 @@ function AuthedShell() {
   const qc = useQueryClient();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
+  const fetchNotifications = useServerFn(getMyNotifications);
+  const { data: notifications } = useQuery({
+    queryKey: ["my-notifications"],
+    queryFn: () => fetchNotifications(),
+    refetchInterval: 30000,
+  });
+  const unreadCount = (notifications ?? []).filter((n: { read_at: string | null }) => !n.read_at).length;
+
   const roles = data?.roles ?? [];
   const isAdmin = roles.includes("admin");
   const isLecturer = roles.includes("lecturer");
   const isStudent = roles.includes("student") || roles.length === 0;
 
-  type NavItem = { to: string; label: string; icon: typeof BookOpen };
+  type NavItem = { to: string; label: string; icon: typeof BookOpen; badge?: number };
   type NavGroup = { label: string; items: NavItem[] };
 
   const groups: NavGroup[] = [{ label: "Main", items: [{ to: "/dashboard", label: "Dashboard", icon: LayoutDashboard }] }];
@@ -51,7 +60,7 @@ function AuthedShell() {
       {
         label: "Account",
         items: [
-          { to: "/student/notifications", label: "Notifications", icon: Bell },
+          { to: "/student/notifications", label: "Notifications", icon: Bell, badge: unreadCount },
           { to: "/student/profile", label: "My Profile", icon: UserCog },
         ],
       },
@@ -135,7 +144,14 @@ function AuthedShell() {
                         : "text-sidebar-foreground/75 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground",
                     )}
                   >
-                    <n.icon className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-primary")} />
+                    <span className="relative flex h-[18px] w-[18px] items-center justify-center">
+                      <n.icon className={cn("h-[18px] w-[18px]", active ? "text-primary" : "text-sidebar-foreground/60 group-hover:text-primary")} />
+                      {!!n.badge && (
+                        <span className="absolute -right-2 -top-2 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold leading-none text-destructive-foreground ring-2 ring-sidebar">
+                          {n.badge > 99 ? "99+" : n.badge}
+                        </span>
+                      )}
+                    </span>
                     {n.label}
                   </Link>
                 );
