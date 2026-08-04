@@ -116,7 +116,7 @@ function PerformancePage() {
                 </CardTitle>
                 <CardDescription>{mod.qualification}</CardDescription>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline" className="gap-1">
                   <Users className="h-3 w-3" /> {mod.learners.length} learners
                 </Badge>
@@ -126,6 +126,7 @@ function PerformancePage() {
                 <Badge variant={tone(mod.module_avg_attendance)} className="gap-1">
                   <CalendarCheck className="h-3 w-3" /> Avg attendance: {mod.module_avg_attendance ?? "—"}%
                 </Badge>
+                <ModuleDownload mod={mod} />
               </div>
             </div>
           </CardHeader>
