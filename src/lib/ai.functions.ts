@@ -9,7 +9,7 @@ export const aiChat = createServerFn({ method: "POST" })
       .object({
         chatId: z.string().uuid().optional(),
         message: z.string().min(1).max(4000),
-        mode: z.enum(["chat", "practice", "summarize", "exam_plan"]).default("chat"),
+        mode: z.enum(["chat", "practice", "summarize", "exam_plan", "general"]).default("chat"),
         attachment: z
           .object({
             name: z.string().min(1).max(200),
