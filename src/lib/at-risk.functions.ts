@@ -3,7 +3,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const AT_RISK_MARK_PCT = 50;
-const AT_RISK_ATTENDANCE_PCT = 60;
 
 export type AtRiskStudent = {
   student_id: string;
@@ -115,9 +114,9 @@ export const getAtRiskStudents = createServerFn({ method: "GET" })
         const okCount = attRows.filter((a) => a.status === "present" || a.status === "late").length;
         const attPct = attRows.length ? (okCount / attRows.length) * 100 : null;
 
-        // Both required: only flag when we have some data on both sides AND both fall below
-        if (avgMark === null || attPct === null) continue;
-        if (avgMark >= AT_RISK_MARK_PCT || attPct >= AT_RISK_ATTENDANCE_PCT) continue;
+        // Flag purely on marks: average below 50% regardless of attendance
+        if (avgMark === null) continue;
+        if (avgMark >= AT_RISK_MARK_PCT) continue;
 
         const p = profMap.get(sid);
         if (!p) continue;
@@ -132,7 +131,7 @@ export const getAtRiskStudents = createServerFn({ method: "GET" })
           module_title: m.title,
           avg_mark_pct: Math.round(avgMark),
           graded_count: pcts.length,
-          attendance_pct: Math.round(attPct),
+          attendance_pct: attPct === null ? null : Math.round(attPct),
           attendance_count: attRows.length,
           last_notified_at: noteMap.get(`${sid}:${m.id}`) ?? null,
         });
