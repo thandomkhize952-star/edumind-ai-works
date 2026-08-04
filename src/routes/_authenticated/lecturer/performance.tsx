@@ -24,6 +24,62 @@ function tone(pct: number | null): "default" | "secondary" | "destructive" {
   return "default";
 }
 
+function moduleDoc(mod: ModulePerformance): ReportDoc {
+  return {
+    title: `Module report — ${mod.module_code} ${mod.module_title}`,
+    meta: [
+      ["Qualification", mod.qualification ?? "—"],
+      ["Registered learners", String(mod.learners.length)],
+      ["Module average mark", mod.module_avg_mark === null ? "—" : `${mod.module_avg_mark}%`],
+      ["Module average attendance", mod.module_avg_attendance === null ? "—" : `${mod.module_avg_attendance}%`],
+      ["Generated", new Date().toLocaleString()],
+    ],
+    sections: [
+      {
+        heading: "Registered learners",
+        head: [
+          "Student number",
+          "Name",
+          "Email",
+          "Average mark (%)",
+          "Graded assessments",
+          "Attendance (%)",
+          "Classes recorded",
+        ],
+        body: mod.learners.map((l) => [
+          l.student_number ?? "—",
+          l.full_name ?? "—",
+          l.email ?? "—",
+          l.avg_mark_pct ?? "—",
+          l.graded_count,
+          l.attendance_pct ?? "—",
+          l.attendance_count,
+        ]),
+      },
+    ],
+  };
+}
+
+function ModuleDownload({ mod }: { mod: ModulePerformance }) {
+  const [format, setFormat] = useState<ExportFormat>("csv");
+  return (
+    <div className="flex items-end gap-2">
+      <ExportFormatSelect value={format} onChange={setFormat} label={null} />
+      <Button
+        size="sm"
+        variant="secondary"
+        onClick={() => downloadReport(`module-report-${mod.module_code}`, format, moduleDoc(mod))}
+      >
+        <Download className="mr-2 h-4 w-4" /> Download
+      </Button>
+    </div>
+  );
+}
+
+function PerformancePage() {
+  const fetchPerf = useServerFn(getLecturerPerformance);
+  const { data, isLoading } = useQuery({
+
 function PerformancePage() {
   const fetchPerf = useServerFn(getLecturerPerformance);
   const { data, isLoading } = useQuery({
