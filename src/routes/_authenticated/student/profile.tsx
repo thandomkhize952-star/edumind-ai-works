@@ -28,8 +28,13 @@ function Profile() {
       return p;
     },
   });
-  const [form, setForm] = useState({ full_name: "", student_number: "", phone: "", bio: "" });
-  useEffect(() => { if (data) setForm({ full_name: data.full_name ?? "", student_number: data.student_number ?? "", phone: data.phone ?? "", bio: data.bio ?? "" }); }, [data]);
+  const [form, setForm] = useState({ first_name: "", last_name: "", student_number: "", phone: "", bio: "" });
+  useEffect(() => {
+    if (data) {
+      const { firstName, lastName } = splitName(data.full_name);
+      setForm({ first_name: firstName, last_name: lastName, student_number: data.student_number ?? "", phone: data.phone ?? "", bio: data.bio ?? "" });
+    }
+  }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
