@@ -36,8 +36,9 @@ function MyCourses() {
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div>
-        <h1 className="text-3xl font-bold">My Courses</h1>
+        <h1 className="text-3xl font-bold">My Course</h1>
         <p className="text-muted-foreground">Select a course to view its modules.</p>
+
       </div>
       {isLoading && <p className="text-muted-foreground">Loading…</p>}
       {!isLoading && data?.length === 0 && (

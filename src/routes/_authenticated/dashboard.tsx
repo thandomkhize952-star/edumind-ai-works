@@ -563,15 +563,20 @@ function StudentDashboard({ userId, name }: { userId: string; name: string }) {
             </Card>
           </div>
 
-          <RowCard
+          <Link
             to="/student/courses"
-            icon={BookOpen}
-            tint="bg-primary/15 text-primary"
-            value={data?.courses ?? 0}
-            label="Active Courses"
-            progress={Math.min(((data?.courses ?? 0) / 6) * 100, 100)}
-            progressLabel={`${data?.courses ?? 0}/6 max`}
-          />
+            className="glass group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 rounded-2xl p-5 transition-colors hover:bg-sidebar-accent/40"
+          >
+            <div className="rounded-xl bg-primary/15 p-3 text-primary"><BookOpen className="h-5 w-5" /></div>
+            <div className="min-w-0">
+              <div className="truncate text-lg font-semibold">
+                {data?.qualification ?? "No course yet"}
+              </div>
+              <div className="text-xs text-muted-foreground">My Course</div>
+            </div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </Link>
+
           <RowCard
             to="/student/assignments"
             icon={ClipboardList}
