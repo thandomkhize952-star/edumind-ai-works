@@ -115,9 +115,9 @@ export const getAtRiskStudents = createServerFn({ method: "GET" })
         const okCount = attRows.filter((a) => a.status === "present" || a.status === "late").length;
         const attPct = attRows.length ? (okCount / attRows.length) * 100 : null;
 
-        // Both required: only flag when we have some data on both sides AND both fall below
-        if (avgMark === null || attPct === null) continue;
-        if (avgMark >= AT_RISK_MARK_PCT || attPct >= AT_RISK_ATTENDANCE_PCT) continue;
+        // Flag purely on marks: average below 50% regardless of attendance
+        if (avgMark === null) continue;
+        if (avgMark >= AT_RISK_MARK_PCT) continue;
 
         const p = profMap.get(sid);
         if (!p) continue;
