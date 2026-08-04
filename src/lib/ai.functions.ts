@@ -2,6 +2,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// Retries a fetch call on transient errors (rate-limited or provider overloaded),
+// with a short exponential backoff. Non-transient errors are returned immediately.
+async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 2): Promise<Response> {
+  let lastRes: Response | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok || (res.status !== 429 && res.status !== 503)) return res;
+    lastRes = res;
+    if (attempt < maxRetries) {
+      await new Promise((resolve) => setTimeout(resolve, 800 * 2 ** attempt));
+    }
+  }
+  return lastRes!;
+}
+
 export const aiChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
@@ -9,7 +24,7 @@ export const aiChat = createServerFn({ method: "POST" })
       .object({
         chatId: z.string().uuid().optional(),
         message: z.string().min(1).max(4000),
-        mode: z.enum(["chat", "practice", "summarize", "exam_plan", "general"]).default("chat"),
+        mode: z.enum(["chat", "practice", "summarize", "exam_plan"]).default("chat"),
         attachment: z
           .object({
             name: z.string().min(1).max(200),
@@ -46,31 +61,26 @@ export const aiChat = createServerFn({ method: "POST" })
 
     if (!provider) throw new Error("AI is not configured");
 
-    const isGeneral = data.mode === "general";
-
     // ---- Course scope: what the student is actually registered for ----
     const { data: enrollments } = await supabase
       .from("enrollments")
       .select("qualification_id, qualifications ( id, code, title, description )")
-      .eq("student_id", userId)
-      .eq("status", "approved");
+      .eq("student_id", userId);
 
     const quals = (enrollments ?? [])
       .map((e) => (e as unknown as { qualifications: { id: string; code: string; title: string; description: string | null } | null }).qualifications)
       .filter(Boolean) as { id: string; code: string; title: string; description: string | null }[];
 
-    if (quals.length === 0 && !isGeneral) {
+    if (quals.length === 0) {
       throw new Error(
         "You are not enrolled in a qualification yet. Enrol in a course before using the AI Tutor.",
       );
     }
 
-    const { data: modules } = quals.length
-      ? await supabase
-          .from("modules")
-          .select("code, title, description, qualification_id")
-          .in("qualification_id", quals.map((q) => q.id))
-      : { data: [] as { code: string; title: string; description: string | null; qualification_id: string }[] };
+    const { data: modules } = await supabase
+      .from("modules")
+      .select("code, title, description, qualification_id")
+      .in("qualification_id", quals.map((q) => q.id));
 
     const scope = quals
       .map((q) => {
@@ -82,7 +92,7 @@ export const aiChat = createServerFn({ method: "POST" })
       })
       .join("\n");
 
-    const scopedGuardrails = `You are the EduMind AI Tutor. You may ONLY help with academic content that falls within the student's registered qualification(s) and their modules, listed below.
+    const guardrails = `You are the EduMind AI Tutor. You may ONLY help with academic content that falls within the student's registered qualification(s) and their modules, listed below.
 
 REGISTERED SCOPE
 ${scope}
@@ -93,19 +103,8 @@ STRICT RULES
 3. Never help the student cheat on live assessments; teach understanding instead.
 4. Use clear markdown. Be concise and encourage active recall.`;
 
-    const generalGuardrails = `You are the EduMind AI Assistant in "Ask anything" mode. The student may ask about ANY topic, inside or outside their registered qualification.
-
-SAFETY RULES
-1. Be helpful, accurate and concise; use clear markdown.
-2. Decline only genuinely harmful, illegal or explicit requests.
-3. For medical, legal or financial questions, give general information and recommend a qualified professional.
-4. Never help the student cheat on live assessments; teach understanding instead.`;
-
-    const guardrails = isGeneral ? generalGuardrails : scopedGuardrails;
-
     const modeByKey: Record<string, string> = {
       chat: "Mode: conversational tutoring.",
-      general: "Mode: open Q&A on any topic the student asks about.",
       practice:
         "Mode: generate 5 multiple-choice practice questions on the in-scope topic provided. Show answers at the bottom under '### Answers'.",
       summarize:
@@ -115,9 +114,7 @@ SAFETY RULES
     };
 
     const attachmentInstruction = data.attachment
-      ? isGeneral
-        ? `\n\nThe student attached a document ("${data.attachment.name}"). Analyse it, produce a structured summary of the key concepts, then generate practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
-        : `\n\nThe student attached a document ("${data.attachment.name}"). First verify the document relates to their registered scope. If it clearly does not, refuse per the rules. If it does: analyse it, produce a structured summary of the key concepts, then generate exam-style practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
+      ? `\n\nThe student attached a document ("${data.attachment.name}"). First verify the document relates to their registered scope. If it clearly does not, refuse per the rules. If it does: analyse it, produce a structured summary of the key concepts, then generate exam-style practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
       : "";
 
     // Get or create chat
@@ -173,8 +170,6 @@ SAFETY RULES
 
     let reply = "";
 
-    const { fetchAiWithRetry, aiErrorMessage, isTransientAiStatus } = await import("./ai-fetch.server");
-
     if (useGeminiNativeForAttachment) {
       // Gemini's OpenAI-compatible endpoint rejects `type: "file"` content parts, so
       // non-image attachments (e.g. PDFs) go through Gemini's native API instead.
@@ -194,69 +189,52 @@ SAFETY RULES
         },
       ];
 
-      // Try the primary model, then a lighter sibling if the first is overloaded.
-      const candidates = [provider.attachmentModel, "gemini-2.5-flash"];
-      let failure: { status: number; text: string } | null = null;
+      const res = await fetchWithRetry(
+        `https://generativelanguage.googleapis.com/v1beta/models/${provider.attachmentModel}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": provider.apiKey },
+          body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents }),
+        },
+      );
 
-      for (const model of candidates) {
-        const result = await fetchAiWithRetry(() =>
-          fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": provider.apiKey },
-            body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents }),
-          }),
-        );
-
-        if (result.ok) {
-          const json = result.json as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-          reply = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-          failure = null;
-          break;
-        }
-
-        failure = { status: result.status, text: result.text };
-        if (!isTransientAiStatus(result.status)) break;
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        if (res.status === 503) throw new Error("AI is temporarily overloaded. Please try again in a moment.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
       }
-
-      if (failure) throw new Error(aiErrorMessage(failure.status, failure.text));
+      const json = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      reply = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
     } else {
-      const primaryModel = data.attachment ? provider.attachmentModel : provider.chatModel;
-      // On the direct-Gemini path (no Lovable key) fall back to a lighter model when overloaded.
-      const candidates = lovableKey ? [primaryModel] : [primaryModel, "gemini-2.5-flash"];
-      let failure: { status: number; text: string } | null = null;
+      const body: Record<string, unknown> = data.attachment
+        ? { model: provider.attachmentModel, ...(lovableKey ? { reasoning_effort: "none" } : {}), messages }
+        : { model: provider.chatModel, messages };
 
-      for (const model of candidates) {
-        const body: Record<string, unknown> = {
-          model,
-          ...(data.attachment && lovableKey ? { reasoning_effort: "none" } : {}),
-          messages,
-        };
+      // Call the resolved provider's OpenAI-compatible chat completions endpoint
+      const res = await fetchWithRetry(provider.baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider.apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
 
-        const result = await fetchAiWithRetry(() =>
-          fetch(provider.baseUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${provider.apiKey}`,
-            },
-            body: JSON.stringify(body),
-          }),
-        );
-
-        if (result.ok) {
-          const json = result.json as { choices?: { message?: { content?: string } }[] };
-          reply = json.choices?.[0]?.message?.content ?? "";
-          failure = null;
-          break;
-        }
-
-        failure = { status: result.status, text: result.text };
-        if (!isTransientAiStatus(result.status)) break;
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace settings.");
+        if (res.status === 503) throw new Error("AI is temporarily overloaded. Please try again in a moment.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
       }
-
-      if (failure) throw new Error(aiErrorMessage(failure.status, failure.text));
+      const json = (await res.json()) as {
+        choices: { message: { content: string } }[];
+      };
+      reply = json.choices?.[0]?.message?.content ?? "";
     }
-
 
     await supabase.from("ai_messages").insert({ chat_id: chatId, role: "assistant", content: reply });
 
