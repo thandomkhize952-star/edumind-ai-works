@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { getMaterialUrl } from "@/lib/storage.functions";
+import { getModuleLecturers } from "@/lib/modules.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/student/modules/$moduleId"
 function ModuleDetail() {
   const { moduleId } = useParams({ from: "/_authenticated/student/modules/$moduleId" });
   const signUrl = useServerFn(getMaterialUrl);
+  const fetchLecturers = useServerFn(getModuleLecturers);
 
   const { data, isLoading } = useQuery({
     queryKey: ["student-module", moduleId],
@@ -39,12 +41,15 @@ function ModuleDetail() {
         ? await supabase.from("submissions").select("assessment_id, score, submitted_at, graded_at, feedback").eq("student_id", uid).in("assessment_id", asmIds)
         : { data: [] as any[] };
 
-      // lecturer profile
-      let lecturer = null;
-      if (modRes.data?.lecturer_id) {
-        const { data: p } = await supabase.from("profiles").select("full_name, email").eq("id", modRes.data.lecturer_id).maybeSingle();
-        lecturer = p;
+      // lecturer profile (resolved server-side; profiles are RLS-protected)
+      let lecturer: { full_name: string | null; email: string | null } | null = null;
+      try {
+        const map = await fetchLecturers({ data: { moduleIds: [moduleId] } });
+        lecturer = map?.[moduleId] ?? null;
+      } catch {
+        lecturer = null;
       }
+
 
       const subByAsm = Object.fromEntries((subs ?? []).map((s) => [s.assessment_id, s]));
       const att = attRes.data ?? [];

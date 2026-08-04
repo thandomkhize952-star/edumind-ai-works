@@ -1,9 +1,11 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { getModuleLecturers } from "@/lib/modules.functions";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, ChevronRight, ArrowLeft } from "lucide-react";
+import { BookOpen, ChevronRight, ArrowLeft, User } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/courses/$qualId")({
   component: QualModules,
@@ -11,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/student/courses/$qualId")(
 
 function QualModules() {
   const { qualId } = useParams({ from: "/_authenticated/student/courses/$qualId" });
+  const fetchLecturers = useServerFn(getModuleLecturers);
   const { data, isLoading } = useQuery({
     queryKey: ["qual-modules", qualId],
     queryFn: async () => {
@@ -24,9 +27,19 @@ function QualModules() {
         .select("id, code, title, description")
         .eq("qualification_id", qualId)
         .order("code");
-      return { qual: q, modules: mods ?? [] };
+      const modules = mods ?? [];
+      let lecturers: Record<string, { full_name: string | null; email: string | null } | null> = {};
+      if (modules.length) {
+        try {
+          lecturers = await fetchLecturers({ data: { moduleIds: modules.map((m) => m.id) } });
+        } catch {
+          lecturers = {};
+        }
+      }
+      return { qual: q, modules, lecturers };
     },
   });
+
 
   return (
     <div className="mx-auto max-w-6xl space-y-6 p-6">
@@ -59,9 +72,16 @@ function QualModules() {
                 <CardTitle className="text-base">{m.code} — {m.title}</CardTitle>
                 <CardDescription className="line-clamp-2">{m.description || "Open module"}</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-end text-sm text-muted-foreground">
-                <ChevronRight className="h-4 w-4" />
+              <CardContent className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    {data?.lecturers?.[m.id]?.full_name || data?.lecturers?.[m.id]?.email || "Unassigned"}
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
               </CardContent>
+
             </Card>
           </Link>
         ))}
