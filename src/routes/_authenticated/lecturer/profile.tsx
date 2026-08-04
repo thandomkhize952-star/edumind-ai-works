@@ -27,12 +27,14 @@ function LecturerProfile() {
     },
   });
 
-  const [form, setForm] = useState({ full_name: "", phone: "", bio: "", email: "" });
+  const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", bio: "", email: "" });
 
   useEffect(() => {
     if (data) {
+      const { firstName, lastName } = splitName(data.full_name);
       setForm({
-        full_name: data.full_name ?? "",
+        first_name: firstName,
+        last_name: lastName,
         phone: data.phone ?? "",
         bio: data.bio ?? "",
         email: data.email ?? "",
@@ -46,7 +48,7 @@ function LecturerProfile() {
       const { error: profErr } = await supabase
         .from("profiles")
         .update({
-          full_name: form.full_name,
+          full_name: joinName(form.first_name, form.last_name),
           phone: form.phone,
           bio: form.bio,
         })
