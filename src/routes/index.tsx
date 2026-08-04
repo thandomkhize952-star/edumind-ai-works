@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { GraduationCap, BookOpen, Brain, ClipboardCheck, Upload, Play, ArrowRight } from "lucide-react";
+import { GraduationCap, BookOpen, Brain, ClipboardCheck, Upload, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
@@ -15,10 +15,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const scrollToFeatures = () => {
-    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <div className="min-h-screen overflow-hidden bg-background">
       {/* ambient background glows */}
@@ -66,11 +62,6 @@ function Landing() {
                 <Link to="/auth" search={{ mode: "signup" }}>
                   Sign In <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10" onClick={scrollToFeatures}>
-                <span className="flex items-center gap-2 cursor-pointer">
-                  <Play className="h-4 w-4" /> Watch Demo
-                </span>
               </Button>
             </div>
           </div>
