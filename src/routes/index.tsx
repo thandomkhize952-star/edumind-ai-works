@@ -15,10 +15,6 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  const scrollToFeatures = () => {
-    document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   return (
     <div className="min-h-screen overflow-hidden bg-background">
       {/* ambient background glows */}
