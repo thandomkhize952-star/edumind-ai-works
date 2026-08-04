@@ -114,7 +114,10 @@ function SignupForm({ onDone }: { onDone: () => void }) {
       toast.success("Account created — you're signed in"); onDone();
     }}>
 
-      <div><Label htmlFor="sn">Full name</Label><Input id="sn" required value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div><Label htmlFor="sfn">First name</Label><Input id="sfn" required value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
+        <div><Label htmlFor="sln">Last name</Label><Input id="sln" required value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
+      </div>
       <div><Label htmlFor="se">Email</Label><Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
       <div><Label htmlFor="sp">Password</Label><Input id="sp" type="password" required minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} /></div>
       <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating…" : "Create account"}</Button>
