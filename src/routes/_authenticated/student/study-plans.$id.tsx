@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   ArrowLeft, BookMarked, BookOpen, CheckCircle2, Circle, Clock, Flag, CalendarDays,
-  Hourglass, LineChart, Lightbulb, Check,
+  Hourglass, LineChart, Lightbulb, Check, Play, RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,13 +59,21 @@ function StudyPlanDetail() {
 
   const { data } = useQuery({ queryKey: ["study-plan", id], queryFn: () => get({ data: { planId: id } }) });
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["study-plan", id] });
+    qc.invalidateQueries({ queryKey: ["study-plans"] });
+  };
+
   const toggle = useMutation({
     mutationFn: (t: StudyPlanTask) =>
       setStatus({ data: { taskId: t.id, status: t.status === "completed" ? "pending" : "completed" } }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["study-plan", id] });
-      qc.invalidateQueries({ queryKey: ["study-plans"] });
-    },
+    onSuccess: invalidate,
+  });
+
+  const setTaskStatus = useMutation({
+    mutationFn: (v: { taskId: string; status: "pending" | "in_progress" | "completed" }) =>
+      setStatus({ data: v }),
+    onSuccess: invalidate,
   });
 
   if (!data) return <div className="p-6 text-sm text-muted-foreground">Loading study plan…</div>;
@@ -140,6 +148,47 @@ function StudyPlanDetail() {
                         <CalendarDays className="h-3.5 w-3.5" />
                         Due {new Date(t.due_date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
                       </span>
+                    )}
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {t.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={setTaskStatus.isPending}
+                        onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "in_progress" })}
+                      >
+                        <Play className="mr-1.5 h-3.5 w-3.5" /> Start
+                      </Button>
+                    )}
+                    {t.status === "in_progress" && (
+                      <>
+                        <Button
+                          size="sm"
+                          disabled={setTaskStatus.isPending}
+                          onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "completed" })}
+                        >
+                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={setTaskStatus.isPending}
+                          onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "pending" })}
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset
+                        </Button>
+                      </>
+                    )}
+                    {t.status === "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={setTaskStatus.isPending}
+                        onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "in_progress" })}
+                      >
+                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reopen
+                      </Button>
                     )}
                   </div>
                 </div>
