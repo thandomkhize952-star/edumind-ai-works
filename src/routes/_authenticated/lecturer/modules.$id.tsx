@@ -220,7 +220,7 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
                         </div>
                       ))
                     )}
-                    <div className="flex items-center gap-2"><Label className="text-xs">Marks</Label><Input type="number" className="w-24" value={q.marks} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, marks: Number(e.target.value) } : x))} /></div>
+                    <div className="flex items-center gap-2"><Label className="text-xs">Marks</Label><Input type="number" min={0} step={1} className="w-24" value={q.marks} onChange={(e) => setQuestions(arr => arr.map((x, i) => i === qi ? { ...x, marks: Math.max(0, Number(e.target.value) || 0) } : x))} /></div>
                   </div>
                 ))}
               </div>
