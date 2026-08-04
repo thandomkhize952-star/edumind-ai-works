@@ -92,7 +92,7 @@ function SignupForm({ onDone }: { onDone: () => void }) {
       e.preventDefault(); setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email, password: pw,
-        options: { data: { full_name: name } },
+        options: { data: { full_name: joinName(firstName, lastName) } },
       });
       if (error) { setLoading(false); toast.error(error.message); return; }
       if (!data.session) {
