@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { UserCog } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { splitName, joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/_authenticated/lecturer/profile")({
   component: LecturerProfile,
@@ -26,12 +27,14 @@ function LecturerProfile() {
     },
   });
 
-  const [form, setForm] = useState({ full_name: "", phone: "", bio: "", email: "" });
+  const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", bio: "", email: "" });
 
   useEffect(() => {
     if (data) {
+      const { firstName, lastName } = splitName(data.full_name);
       setForm({
-        full_name: data.full_name ?? "",
+        first_name: firstName,
+        last_name: lastName,
         phone: data.phone ?? "",
         bio: data.bio ?? "",
         email: data.email ?? "",
@@ -45,7 +48,7 @@ function LecturerProfile() {
       const { error: profErr } = await supabase
         .from("profiles")
         .update({
-          full_name: form.full_name,
+          full_name: joinName(form.first_name, form.last_name),
           phone: form.phone,
           bio: form.bio,
         })
@@ -85,12 +88,21 @@ function LecturerProfile() {
               save.mutate();
             }}
           >
-            <div>
-              <Label>Full name</Label>
-              <Input
-                value={form.full_name}
-                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>First name</Label>
+                <Input
+                  value={form.first_name}
+                  onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input
+                  value={form.last_name}
+                  onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
+                />
+              </div>
             </div>
             <div>
               <Label>Email address</Label>

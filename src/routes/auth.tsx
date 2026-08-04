@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { ensureStudentNumber } from "@/lib/onboarding.functions";
+import { joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -85,13 +86,13 @@ function LoginForm({ onDone }: { onDone: () => void }) {
 }
 
 function SignupForm({ onDone }: { onDone: () => void }) {
-  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState(""); const [loading, setLoading] = useState(false);
+  const [firstName, setFirstName] = useState(""); const [lastName, setLastName] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState(""); const [loading, setLoading] = useState(false);
   return (
     <form className="space-y-3 pt-3" onSubmit={async (e) => {
       e.preventDefault(); setLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email, password: pw,
-        options: { data: { full_name: name } },
+        options: { data: { full_name: joinName(firstName, lastName) } },
       });
       if (error) { setLoading(false); toast.error(error.message); return; }
       if (!data.session) {
@@ -113,7 +114,10 @@ function SignupForm({ onDone }: { onDone: () => void }) {
       toast.success("Account created — you're signed in"); onDone();
     }}>
 
-      <div><Label htmlFor="sn">Full name</Label><Input id="sn" required value={name} onChange={(e) => setName(e.target.value)} /></div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div><Label htmlFor="sfn">First name</Label><Input id="sfn" required value={firstName} onChange={(e) => setFirstName(e.target.value)} /></div>
+        <div><Label htmlFor="sln">Last name</Label><Input id="sln" required value={lastName} onChange={(e) => setLastName(e.target.value)} /></div>
+      </div>
       <div><Label htmlFor="se">Email</Label><Input id="se" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
       <div><Label htmlFor="sp">Password</Label><Input id="sp" type="password" required minLength={6} value={pw} onChange={(e) => setPw(e.target.value)} /></div>
       <Button type="submit" disabled={loading} className="w-full">{loading ? "Creating…" : "Create account"}</Button>

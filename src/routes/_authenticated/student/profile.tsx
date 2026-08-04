@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureStudentNumber } from "@/lib/onboarding.functions";
+import { splitName, joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/_authenticated/student/profile")({
   component: Profile,
@@ -28,14 +29,21 @@ function Profile() {
       return p;
     },
   });
-  const [form, setForm] = useState({ full_name: "", student_number: "", phone: "", bio: "" });
-  useEffect(() => { if (data) setForm({ full_name: data.full_name ?? "", student_number: data.student_number ?? "", phone: data.phone ?? "", bio: data.bio ?? "" }); }, [data]);
+  const [form, setForm] = useState({ first_name: "", last_name: "", student_number: "", phone: "", bio: "" });
+  useEffect(() => {
+    if (data) {
+      const { firstName, lastName } = splitName(data.full_name);
+      setForm({ first_name: firstName, last_name: lastName, student_number: data.student_number ?? "", phone: data.phone ?? "", bio: data.bio ?? "" });
+    }
+  }, [data]);
 
   const save = useMutation({
     mutationFn: async () => {
       if (!data) return;
-      const { student_number: _sn, ...editable } = form;
-      const { error } = await supabase.from("profiles").update(editable).eq("id", data.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: joinName(form.first_name, form.last_name), phone: form.phone, bio: form.bio })
+        .eq("id", data.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Profile saved"); qc.invalidateQueries({ queryKey: ["my-profile"] }); qc.invalidateQueries({ queryKey: ["me"] }); },
@@ -49,7 +57,10 @@ function Profile() {
         <CardHeader><CardTitle>Personal information</CardTitle><CardDescription>{data?.email}</CardDescription></CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
-            <div><Label>Full name</Label><Input value={form.full_name} onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))} /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label>First name</Label><Input value={form.first_name} onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))} /></div>
+              <div><Label>Last name</Label><Input value={form.last_name} onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))} /></div>
+            </div>
             <div><Label>Student number</Label><Input value={form.student_number || "Being allocated…"} readOnly disabled /><p className="mt-1 text-xs text-muted-foreground">Automatically allocated by the system.</p></div>
             <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
             <div><Label>Bio</Label><Textarea rows={4} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} /></div>
