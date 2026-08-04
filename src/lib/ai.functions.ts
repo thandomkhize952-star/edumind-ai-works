@@ -2,6 +2,20 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
+// Retries a fetch call on transient errors (rate-limited or provider overloaded),
+// with a short exponential backoff. Non-transient errors are returned immediately.
+async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 2): Promise<Response> {
+  let lastRes: Response | undefined;
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const res = await fetch(url, init);
+    if (res.ok || (res.status !== 429 && res.status !== 503)) return res;
+    lastRes = res;
+    if (attempt < maxRetries) {
+      await new Promise((resolve) => setTimeout(resolve, 800 * 2 ** attempt));
+    }
+  }
+  return lastRes!;
+}
 
 export const aiChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -40,8 +54,8 @@ export const aiChat = createServerFn({ method: "POST" })
         ? {
             apiKey: geminiKey,
             baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-            chatModel: "gemini-3.6-flash",
-            attachmentModel: "gemini-3.6-flash", // free tier: Pro models are paid-only, keep both paths on Flash
+            chatModel: "gemini-3.5-flash",
+            attachmentModel: "gemini-3.5-flash", // free tier: Pro models are paid-only, keep both paths on Flash
           }
         : null;
 
@@ -156,8 +170,6 @@ STRICT RULES
 
     let reply = "";
 
-    const { fetchAiWithRetry, aiErrorMessage, isTransientAiStatus } = await import("./ai-fetch.server");
-
     if (useGeminiNativeForAttachment) {
       // Gemini's OpenAI-compatible endpoint rejects `type: "file"` content parts, so
       // non-image attachments (e.g. PDFs) go through Gemini's native API instead.
@@ -177,67 +189,52 @@ STRICT RULES
         },
       ];
 
-      const candidates = [provider.attachmentModel];
-      let failure: { status: number; text: string } | null = null;
+      const res = await fetchWithRetry(
+        `https://generativelanguage.googleapis.com/v1beta/models/${provider.attachmentModel}:generateContent`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": provider.apiKey },
+          body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents }),
+        },
+      );
 
-      for (const model of candidates) {
-        const result = await fetchAiWithRetry(() =>
-          fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "x-goog-api-key": provider.apiKey },
-            body: JSON.stringify({ system_instruction: { parts: [{ text: systemText }] }, contents }),
-          }),
-        );
-
-        if (result.ok) {
-          const json = result.json as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
-          reply = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
-          failure = null;
-          break;
-        }
-
-        failure = { status: result.status, text: result.text };
-        if (!isTransientAiStatus(result.status)) break;
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        if (res.status === 503) throw new Error("AI is temporarily overloaded. Please try again in a moment.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
       }
-
-      if (failure) throw new Error(aiErrorMessage(failure.status, failure.text));
+      const json = (await res.json()) as {
+        candidates?: { content?: { parts?: { text?: string }[] } }[];
+      };
+      reply = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
     } else {
-      const primaryModel = data.attachment ? provider.attachmentModel : provider.chatModel;
-      const candidates = [primaryModel];
-      let failure: { status: number; text: string } | null = null;
+      const body: Record<string, unknown> = data.attachment
+        ? { model: provider.attachmentModel, ...(lovableKey ? { reasoning_effort: "none" } : {}), messages }
+        : { model: provider.chatModel, messages };
 
-      for (const model of candidates) {
-        const body: Record<string, unknown> = {
-          model,
-          ...(data.attachment && lovableKey ? { reasoning_effort: "none" } : {}),
-          messages,
-        };
+      // Call the resolved provider's OpenAI-compatible chat completions endpoint
+      const res = await fetchWithRetry(provider.baseUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${provider.apiKey}`,
+        },
+        body: JSON.stringify(body),
+      });
 
-        const result = await fetchAiWithRetry(() =>
-          fetch(provider.baseUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${provider.apiKey}`,
-            },
-            body: JSON.stringify(body),
-          }),
-        );
-
-        if (result.ok) {
-          const json = result.json as { choices?: { message?: { content?: string } }[] };
-          reply = json.choices?.[0]?.message?.content ?? "";
-          failure = null;
-          break;
-        }
-
-        failure = { status: result.status, text: result.text };
-        if (!isTransientAiStatus(result.status)) break;
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429) throw new Error("AI is rate-limited. Try again shortly.");
+        if (res.status === 402) throw new Error("AI credits exhausted. Add credits in workspace settings.");
+        if (res.status === 503) throw new Error("AI is temporarily overloaded. Please try again in a moment.");
+        throw new Error(`AI error: ${text.slice(0, 200)}`);
       }
-
-      if (failure) throw new Error(aiErrorMessage(failure.status, failure.text));
+      const json = (await res.json()) as {
+        choices: { message: { content: string } }[];
+      };
+      reply = json.choices?.[0]?.message?.content ?? "";
     }
-
 
     await supabase.from("ai_messages").insert({ chat_id: chatId, role: "assistant", content: reply });
 
