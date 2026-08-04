@@ -101,7 +101,8 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
     mutationFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) throw new Error("Not signed in");
-      const total = questions.reduce((a, q) => a + Number(q.marks || 0), 0);
+      if (questions.some((q) => Number(q.marks) < 0)) throw new Error("Marks cannot be negative");
+      const total = questions.reduce((a, q) => a + Math.max(0, Number(q.marks) || 0), 0);
       const { data: a, error } = await supabase.from("assessments").insert({
         module_id: moduleId,
         created_by: u.user.id,
