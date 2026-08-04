@@ -1,13 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { getLecturerPerformance } from "@/lib/performance.functions";
+import { useState } from "react";
+import { getLecturerPerformance, type ModulePerformance } from "@/lib/performance.functions";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Users, TrendingUp, CalendarCheck } from "lucide-react";
+import { ExportFormatSelect } from "@/components/ExportFormatSelect";
+import { downloadReport, type ExportFormat, type ReportDoc } from "@/lib/report-doc";
+import { BarChart3, Users, TrendingUp, CalendarCheck, Download } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/lecturer/performance")({
   component: PerformancePage,
