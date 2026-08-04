@@ -123,7 +123,7 @@ function AssessmentsTab({ moduleId, assessments, onChanged }: { moduleId: string
           options: isAssignment ? [] : q.options,
           correct_index: isAssignment ? 0 : q.correct_index,
           answer_text: isAssignment ? (q.answer_text || null) : null,
-          marks: q.marks,
+          marks: Math.max(0, Number(q.marks) || 0),
         }));
         const { error: qe } = await supabase.from("assessment_questions").insert(rows);
         if (qe) throw qe;
