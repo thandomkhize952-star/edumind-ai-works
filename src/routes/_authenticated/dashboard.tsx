@@ -436,6 +436,7 @@ function StudentDashboard({ userId, name }: { userId: string; name: string }) {
         qualification: q ? `${q.code} — ${q.title}` : null,
         quizzesTaken,
         assignments,
+        gradedCount: pcts.length,
       };
     },
   });
