@@ -47,6 +47,7 @@ function AuthedShell() {
         ],
       },
       { label: "AI Tutor", items: [{ to: "/student/tutor", label: "Chat with AI", icon: Brain }] },
+      { label: "Study Plan", items: [{ to: "/student/study-plans", label: "AI Study Plans", icon: CalendarCheck }] },
       {
         label: "Account",
         items: [
