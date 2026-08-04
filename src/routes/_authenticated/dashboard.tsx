@@ -445,6 +445,7 @@ function StudentDashboard({ userId, name }: { userId: string; name: string }) {
   const avgPct = data?.avgPct ?? 0;
   const attPct = data?.attPct ?? 0;
   const ring = 2 * Math.PI * 52;
+  const atRisk = (data?.gradedCount ?? 0) > 0 && avgPct < 50;
 
   return (
     <div className="mx-auto max-w-7xl space-y-5 p-6">
