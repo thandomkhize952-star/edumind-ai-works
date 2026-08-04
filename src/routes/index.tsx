@@ -63,11 +63,6 @@ function Landing() {
                   Sign In <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10" onClick={scrollToFeatures}>
-                <span className="flex items-center gap-2 cursor-pointer">
-                  <Play className="h-4 w-4" /> Watch Demo
-                </span>
-              </Button>
             </div>
           </div>
 
