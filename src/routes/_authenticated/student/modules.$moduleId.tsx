@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/student/modules/$moduleId"
 function ModuleDetail() {
   const { moduleId } = useParams({ from: "/_authenticated/student/modules/$moduleId" });
   const signUrl = useServerFn(getMaterialUrl);
+  const fetchLecturers = useServerFn(getModuleLecturers);
 
   const { data, isLoading } = useQuery({
     queryKey: ["student-module", moduleId],
