@@ -203,8 +203,7 @@ STRICT RULES
       if (failure) throw new Error(aiErrorMessage(failure.status, failure.text));
     } else {
       const primaryModel = data.attachment ? provider.attachmentModel : provider.chatModel;
-      // On the direct-Gemini path (no Lovable key) fall back to a lighter model when overloaded.
-      const candidates = lovableKey ? [primaryModel] : [primaryModel, "gemini-2.5-flash"];
+      const candidates = [primaryModel];
       let failure: { status: number; text: string } | null = null;
 
       for (const model of candidates) {
