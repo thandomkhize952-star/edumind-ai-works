@@ -199,20 +199,32 @@ export type Database = {
       enrollments: {
         Row: {
           created_at: string
+          decision_note: string | null
           id: string
           qualification_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
           student_id: string
         }
         Insert: {
           created_at?: string
+          decision_note?: string | null
           id?: string
           qualification_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           student_id: string
         }
         Update: {
           created_at?: string
+          decision_note?: string | null
           id?: string
           qualification_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
           student_id?: string
         }
         Relationships: [

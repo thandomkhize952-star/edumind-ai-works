@@ -237,7 +237,7 @@ function LecturerDashboard({ userId, name }: { userId: string; name: string }) {
 
       const [enrollRes, attRes] = await Promise.all([
         qualIds.length
-          ? supabase.from("enrollments").select("student_id, qualification_id").in("qualification_id", qualIds)
+          ? supabase.from("enrollments").select("student_id, qualification_id").eq("status", "approved").in("qualification_id", qualIds)
           : Promise.resolve({ data: [] as { student_id: string; qualification_id: string }[] }),
         moduleIds.length
           ? supabase.from("attendance").select("status, module_id").in("module_id", moduleIds)
@@ -402,7 +402,7 @@ function StudentDashboard({ userId, name }: { userId: string; name: string }) {
           .select("id", { count: "exact", head: true })
           .eq("user_id", userId),
         supabase.from("attendance").select("status, date").eq("student_id", userId).order("date", { ascending: false }),
-        supabase.from("enrollments").select("qualification_id, qualifications(code, title)").eq("student_id", userId),
+        supabase.from("enrollments").select("qualification_id, qualifications(code, title)").eq("student_id", userId).eq("status", "approved"),
       ]);
 
       const subs = subsRes.data ?? [];

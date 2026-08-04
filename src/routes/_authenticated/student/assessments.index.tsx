@@ -15,7 +15,7 @@ function StudentAssessments() {
     queryFn: async () => {
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return [];
-      const { data: enr } = await supabase.from("enrollments").select("qualification_id").eq("student_id", u.user.id);
+      const { data: enr } = await supabase.from("enrollments").select("qualification_id").eq("student_id", u.user.id).eq("status", "approved");
       const qids = (enr ?? []).map(e => e.qualification_id);
       if (!qids.length) return [];
       const { data: mods } = await supabase.from("modules").select("id, code, title").in("qualification_id", qids);
