@@ -3,7 +3,6 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
 const AT_RISK_MARK_PCT = 50;
-const AT_RISK_ATTENDANCE_PCT = 60;
 
 export type AtRiskStudent = {
   student_id: string;
