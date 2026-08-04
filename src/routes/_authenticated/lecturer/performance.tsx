@@ -79,10 +79,6 @@ function ModuleDownload({ mod }: { mod: ModulePerformance }) {
 function PerformancePage() {
   const fetchPerf = useServerFn(getLecturerPerformance);
   const { data, isLoading } = useQuery({
-
-function PerformancePage() {
-  const fetchPerf = useServerFn(getLecturerPerformance);
-  const { data, isLoading } = useQuery({
     queryKey: ["lecturer-performance"],
     queryFn: () => fetchPerf(),
   });
