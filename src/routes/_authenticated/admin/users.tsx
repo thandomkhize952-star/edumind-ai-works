@@ -159,10 +159,11 @@ function AddLecturerCard({
       </CardHeader>
       <CardContent>
         <form
-          className="grid gap-3 sm:grid-cols-4 sm:items-end"
+          className="grid gap-3 sm:grid-cols-5 sm:items-end"
           onSubmit={(e) => { e.preventDefault(); m.mutate(); }}
         >
-          <div><Label htmlFor="lname">Full name</Label><Input id="lname" required value={form.fullName} onChange={(e) => setForm(f => ({ ...f, fullName: e.target.value }))} /></div>
+          <div><Label htmlFor="lfname">First name</Label><Input id="lfname" required value={form.firstName} onChange={(e) => setForm(f => ({ ...f, firstName: e.target.value }))} /></div>
+          <div><Label htmlFor="llname">Last name</Label><Input id="llname" required value={form.lastName} onChange={(e) => setForm(f => ({ ...f, lastName: e.target.value }))} /></div>
           <div><Label htmlFor="lemail">Email</Label><Input id="lemail" type="email" required value={form.email} onChange={(e) => setForm(f => ({ ...f, email: e.target.value }))} /></div>
           <div><Label htmlFor="lpw">Temporary password</Label><Input id="lpw" type="text" required minLength={6} value={form.password} onChange={(e) => setForm(f => ({ ...f, password: e.target.value }))} /></div>
           <Button type="submit" disabled={m.isPending}>{m.isPending ? "Creating…" : "Create lecturer"}</Button>
