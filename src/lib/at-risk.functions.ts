@@ -132,7 +132,7 @@ export const getAtRiskStudents = createServerFn({ method: "GET" })
           module_title: m.title,
           avg_mark_pct: Math.round(avgMark),
           graded_count: pcts.length,
-          attendance_pct: Math.round(attPct),
+          attendance_pct: attPct === null ? null : Math.round(attPct),
           attendance_count: attRows.length,
           last_notified_at: noteMap.get(`${sid}:${m.id}`) ?? null,
         });
