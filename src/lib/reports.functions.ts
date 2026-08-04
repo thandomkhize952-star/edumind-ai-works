@@ -104,6 +104,7 @@ export const getEnrollmentReport = createServerFn({ method: "POST" })
         email: p?.email ?? "—",
         qualification_code: qq?.code ?? "—",
         qualification_title: qq?.title ?? "—",
+        status: e.status ?? "approved",
         enrolled_at: e.created_at,
       };
     });
