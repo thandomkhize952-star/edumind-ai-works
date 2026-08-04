@@ -134,12 +134,17 @@ function AddLecturerCard({
   onCreate: (v: { email: string; password: string; fullName: string; role: "lecturer" | "admin" }) => Promise<unknown>;
   onCreated: () => void;
 }) {
-  const [form, setForm] = useState({ fullName: "", email: "", password: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "" });
   const m = useMutation({
-    mutationFn: () => onCreate({ ...form, role: "lecturer" }),
+    mutationFn: () => onCreate({
+      email: form.email,
+      password: form.password,
+      fullName: joinName(form.firstName, form.lastName),
+      role: "lecturer",
+    }),
     onSuccess: () => {
       toast.success("Lecturer account created");
-      setForm({ fullName: "", email: "", password: "" });
+      setForm({ firstName: "", lastName: "", email: "", password: "" });
       onCreated();
     },
     onError: (e: Error) => toast.error(e.message),
