@@ -46,6 +46,8 @@ export const aiChat = createServerFn({ method: "POST" })
 
     if (!provider) throw new Error("AI is not configured");
 
+    const isGeneral = data.mode === "general";
+
     // ---- Course scope: what the student is actually registered for ----
     const { data: enrollments } = await supabase
       .from("enrollments")
@@ -57,16 +59,18 @@ export const aiChat = createServerFn({ method: "POST" })
       .map((e) => (e as unknown as { qualifications: { id: string; code: string; title: string; description: string | null } | null }).qualifications)
       .filter(Boolean) as { id: string; code: string; title: string; description: string | null }[];
 
-    if (quals.length === 0) {
+    if (quals.length === 0 && !isGeneral) {
       throw new Error(
         "You are not enrolled in a qualification yet. Enrol in a course before using the AI Tutor.",
       );
     }
 
-    const { data: modules } = await supabase
-      .from("modules")
-      .select("code, title, description, qualification_id")
-      .in("qualification_id", quals.map((q) => q.id));
+    const { data: modules } = quals.length
+      ? await supabase
+          .from("modules")
+          .select("code, title, description, qualification_id")
+          .in("qualification_id", quals.map((q) => q.id))
+      : { data: [] as { code: string; title: string; description: string | null; qualification_id: string }[] };
 
     const scope = quals
       .map((q) => {
@@ -78,7 +82,7 @@ export const aiChat = createServerFn({ method: "POST" })
       })
       .join("\n");
 
-    const guardrails = `You are the EduMind AI Tutor. You may ONLY help with academic content that falls within the student's registered qualification(s) and their modules, listed below.
+    const scopedGuardrails = `You are the EduMind AI Tutor. You may ONLY help with academic content that falls within the student's registered qualification(s) and their modules, listed below.
 
 REGISTERED SCOPE
 ${scope}
@@ -89,8 +93,19 @@ STRICT RULES
 3. Never help the student cheat on live assessments; teach understanding instead.
 4. Use clear markdown. Be concise and encourage active recall.`;
 
+    const generalGuardrails = `You are the EduMind AI Assistant in "Ask anything" mode. The student may ask about ANY topic, inside or outside their registered qualification.
+
+SAFETY RULES
+1. Be helpful, accurate and concise; use clear markdown.
+2. Decline only genuinely harmful, illegal or explicit requests.
+3. For medical, legal or financial questions, give general information and recommend a qualified professional.
+4. Never help the student cheat on live assessments; teach understanding instead.`;
+
+    const guardrails = isGeneral ? generalGuardrails : scopedGuardrails;
+
     const modeByKey: Record<string, string> = {
       chat: "Mode: conversational tutoring.",
+      general: "Mode: open Q&A on any topic the student asks about.",
       practice:
         "Mode: generate 5 multiple-choice practice questions on the in-scope topic provided. Show answers at the bottom under '### Answers'.",
       summarize:
@@ -100,7 +115,9 @@ STRICT RULES
     };
 
     const attachmentInstruction = data.attachment
-      ? `\n\nThe student attached a document ("${data.attachment.name}"). First verify the document relates to their registered scope. If it clearly does not, refuse per the rules. If it does: analyse it, produce a structured summary of the key concepts, then generate exam-style practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
+      ? isGeneral
+        ? `\n\nThe student attached a document ("${data.attachment.name}"). Analyse it, produce a structured summary of the key concepts, then generate practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
+        : `\n\nThe student attached a document ("${data.attachment.name}"). First verify the document relates to their registered scope. If it clearly does not, refuse per the rules. If it does: analyse it, produce a structured summary of the key concepts, then generate exam-style practice questions (a mix of multiple-choice and short-answer) with an answer key under '### Answers'.`
       : "";
 
     // Get or create chat
