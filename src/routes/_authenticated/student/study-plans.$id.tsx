@@ -59,13 +59,21 @@ function StudyPlanDetail() {
 
   const { data } = useQuery({ queryKey: ["study-plan", id], queryFn: () => get({ data: { planId: id } }) });
 
+  const invalidate = () => {
+    qc.invalidateQueries({ queryKey: ["study-plan", id] });
+    qc.invalidateQueries({ queryKey: ["study-plans"] });
+  };
+
   const toggle = useMutation({
     mutationFn: (t: StudyPlanTask) =>
       setStatus({ data: { taskId: t.id, status: t.status === "completed" ? "pending" : "completed" } }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["study-plan", id] });
-      qc.invalidateQueries({ queryKey: ["study-plans"] });
-    },
+    onSuccess: invalidate,
+  });
+
+  const setTaskStatus = useMutation({
+    mutationFn: (v: { taskId: string; status: "pending" | "in_progress" | "completed" }) =>
+      setStatus({ data: v }),
+    onSuccess: invalidate,
   });
 
   if (!data) return <div className="p-6 text-sm text-muted-foreground">Loading study plan…</div>;
