@@ -150,6 +150,47 @@ function StudyPlanDetail() {
                       </span>
                     )}
                   </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {t.status === "pending" && (
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        disabled={setTaskStatus.isPending}
+                        onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "in_progress" })}
+                      >
+                        <Play className="mr-1.5 h-3.5 w-3.5" /> Start
+                      </Button>
+                    )}
+                    {t.status === "in_progress" && (
+                      <>
+                        <Button
+                          size="sm"
+                          disabled={setTaskStatus.isPending}
+                          onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "completed" })}
+                        >
+                          <CheckCircle2 className="mr-1.5 h-3.5 w-3.5" /> Mark complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={setTaskStatus.isPending}
+                          onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "pending" })}
+                        >
+                          <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reset
+                        </Button>
+                      </>
+                    )}
+                    {t.status === "completed" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={setTaskStatus.isPending}
+                        onClick={() => setTaskStatus.mutate({ taskId: t.id, status: "in_progress" })}
+                      >
+                        <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Reopen
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
