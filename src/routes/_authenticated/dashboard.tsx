@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound, CheckCircle2, X, Trophy, Bot, Sparkles } from "lucide-react";
+import { Award, Brain, CalendarCheck, ClipboardList, BookOpen, GraduationCap, Users, Layers, FileText, ArrowRight, FolderOpen, Plus, Zap, UserPlus, BarChart3, IdCard, UserRound, CheckCircle2, X, Trophy, Bot, Sparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 
