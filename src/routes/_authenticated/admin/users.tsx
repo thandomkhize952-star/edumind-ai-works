@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { toast } from "sonner";
+import { joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsers,
