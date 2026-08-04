@@ -39,8 +39,10 @@ function Profile() {
   const save = useMutation({
     mutationFn: async () => {
       if (!data) return;
-      const { student_number: _sn, ...editable } = form;
-      const { error } = await supabase.from("profiles").update(editable).eq("id", data.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update({ full_name: joinName(form.first_name, form.last_name), phone: form.phone, bio: form.bio })
+        .eq("id", data.id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Profile saved"); qc.invalidateQueries({ queryKey: ["my-profile"] }); qc.invalidateQueries({ queryKey: ["me"] }); },
