@@ -86,7 +86,7 @@ function LoginForm({ onDone }: { onDone: () => void }) {
 }
 
 function SignupForm({ onDone }: { onDone: () => void }) {
-  const [name, setName] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState(""); const [loading, setLoading] = useState(false);
+  const [firstName, setFirstName] = useState(""); const [lastName, setLastName] = useState(""); const [email, setEmail] = useState(""); const [pw, setPw] = useState(""); const [loading, setLoading] = useState(false);
   return (
     <form className="space-y-3 pt-3" onSubmit={async (e) => {
       e.preventDefault(); setLoading(true);
