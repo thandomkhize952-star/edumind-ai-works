@@ -177,8 +177,7 @@ STRICT RULES
         },
       ];
 
-      // Try the primary model, then a lighter sibling if the first is overloaded.
-      const candidates = [provider.attachmentModel, "gemini-2.5-flash"];
+      const candidates = [provider.attachmentModel];
       let failure: { status: number; text: string } | null = null;
 
       for (const model of candidates) {
