@@ -50,7 +50,8 @@ export const aiChat = createServerFn({ method: "POST" })
     const { data: enrollments } = await supabase
       .from("enrollments")
       .select("qualification_id, qualifications ( id, code, title, description )")
-      .eq("student_id", userId);
+      .eq("student_id", userId)
+      .eq("status", "approved");
 
     const quals = (enrollments ?? [])
       .map((e) => (e as unknown as { qualifications: { id: string; code: string; title: string; description: string | null } | null }).qualifications)

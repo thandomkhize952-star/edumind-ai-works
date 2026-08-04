@@ -26,6 +26,7 @@ export const getLecturerModuleDetail = createServerFn({ method: "POST" })
     const { data: enrolls } = await supabaseAdmin
       .from("enrollments")
       .select("student_id")
+      .eq("status", "approved")
       .eq("qualification_id", module.qualification_id);
     const studentIds = (enrolls ?? []).map(e => e.student_id);
     const { data: students } = studentIds.length

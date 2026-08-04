@@ -79,7 +79,7 @@ export const getEnrollmentReport = createServerFn({ method: "POST" })
 
     let q = supabaseAdmin
       .from("enrollments")
-      .select("id, student_id, qualification_id, created_at")
+      .select("id, student_id, qualification_id, created_at, status")
       .order("created_at", { ascending: false });
     if (data.from) q = q.gte("created_at", new Date(data.from).toISOString());
     if (data.to) q = q.lte("created_at", new Date(`${data.to}T23:59:59.999Z`).toISOString());
@@ -193,7 +193,7 @@ export const getMyTranscript = createServerFn({ method: "GET" })
 
     const [{ data: profile }, { data: enrolls }] = await Promise.all([
       supabase.from("profiles").select("full_name, email, student_number").eq("id", userId).maybeSingle(),
-      supabase.from("enrollments").select("qualification_id, created_at, qualifications(code, title)").eq("student_id", userId),
+      supabase.from("enrollments").select("qualification_id, created_at, qualifications(code, title)").eq("student_id", userId).eq("status", "approved"),
     ]);
 
     const qualIds = (enrolls ?? []).map((e) => e.qualification_id);

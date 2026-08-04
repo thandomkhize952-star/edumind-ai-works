@@ -17,7 +17,8 @@ function MyCourses() {
       const { data: enr } = await supabase
         .from("enrollments")
         .select("qualification_id, qualifications(id, code, title, description)")
-        .eq("student_id", u.user.id);
+        .eq("student_id", u.user.id)
+        .eq("status", "approved");
       const quals = (enr ?? []).map((e) => e.qualifications).filter(Boolean) as Array<{
         id: string; code: string; title: string; description: string | null;
       }>;

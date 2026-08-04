@@ -41,6 +41,7 @@ export const getAtRiskStudents = createServerFn({ method: "GET" })
     const { data: enrolls } = await supabaseAdmin
       .from("enrollments")
       .select("student_id, qualification_id")
+      .eq("status", "approved")
       .in("qualification_id", qualIds);
     const enrollments = enrolls ?? [];
 

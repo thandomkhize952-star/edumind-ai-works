@@ -42,6 +42,7 @@ export const getLecturerPerformance = createServerFn({ method: "GET" })
     const { data: enrolls } = await supabaseAdmin
       .from("enrollments")
       .select("student_id, qualification_id")
+      .eq("status", "approved")
       .in("qualification_id", qualIds);
 
     const { data: assessments } = await supabase
