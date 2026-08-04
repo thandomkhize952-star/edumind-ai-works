@@ -2,20 +2,6 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-// Retries a fetch call on transient errors (rate-limited or provider overloaded),
-// with a short exponential backoff. Non-transient errors are returned immediately.
-async function fetchWithRetry(url: string, init: RequestInit, maxRetries = 2): Promise<Response> {
-  let lastRes: Response | undefined;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    const res = await fetch(url, init);
-    if (res.ok || (res.status !== 429 && res.status !== 503)) return res;
-    lastRes = res;
-    if (attempt < maxRetries) {
-      await new Promise((resolve) => setTimeout(resolve, 800 * 2 ** attempt));
-    }
-  }
-  return lastRes!;
-}
 
 export const aiChat = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
