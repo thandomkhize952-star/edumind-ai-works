@@ -88,12 +88,21 @@ function LecturerProfile() {
               save.mutate();
             }}
           >
-            <div>
-              <Label>Full name</Label>
-              <Input
-                value={form.full_name}
-                onChange={(e) => setForm((f) => ({ ...f, full_name: e.target.value }))}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label>First name</Label>
+                <Input
+                  value={form.first_name}
+                  onChange={(e) => setForm((f) => ({ ...f, first_name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label>Last name</Label>
+                <Input
+                  value={form.last_name}
+                  onChange={(e) => setForm((f) => ({ ...f, last_name: e.target.value }))}
+                />
+              </div>
             </div>
             <div>
               <Label>Email address</Label>
