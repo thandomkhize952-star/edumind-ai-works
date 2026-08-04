@@ -476,7 +476,22 @@ function StudentDashboard({ userId, name }: { userId: string; name: string }) {
                   <span className="pb-1 text-3xl font-semibold text-muted-foreground">/4.0</span>
                 </div>
                 <div className="mt-4 truncate text-base font-medium text-accent">{data?.qualification ?? "Not enrolled yet"}</div>
-                <div className="text-sm text-muted-foreground">Overall grade: {avgPct.toFixed(1)}%</div>
+                <div className="text-sm text-muted-foreground">
+                  Overall grade: {avgPct.toFixed(1)}%
+                  {atRisk && <span className="ml-2 font-semibold text-destructive">• At risk — needs support</span>}
+                </div>
+                {atRisk && (
+                  <div className="mt-4 flex items-start gap-3 rounded-xl border border-destructive/40 bg-destructive/10 p-3">
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+                    <div className="min-w-0 text-sm">
+                      <div className="font-semibold text-destructive">You're at risk of failing</div>
+                      <p className="text-muted-foreground">
+                        Your average is {avgPct.toFixed(1)}%, below the 50% pass mark. Your lecturers have been alerted — book
+                        support, review your modules and use the AI Tutor to build a study plan.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="relative h-32 w-32 shrink-0">
