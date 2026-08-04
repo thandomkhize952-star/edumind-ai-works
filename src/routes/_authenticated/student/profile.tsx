@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { ensureStudentNumber } from "@/lib/onboarding.functions";
+import { splitName, joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/_authenticated/student/profile")({
   component: Profile,
