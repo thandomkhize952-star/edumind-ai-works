@@ -34,7 +34,7 @@ function AtRiskPage() {
         <div>
           <h1 className="text-3xl font-bold">At-Risk Students</h1>
           <p className="text-muted-foreground">
-            Students in modules you teach whose average mark is below 50% <b>and</b> attendance is below 60%.
+            Students in modules you teach whose average mark is below 50% — flagged on marks alone, even with perfect attendance.
           </p>
         </div>
       </div>
