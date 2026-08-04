@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GraduationCap } from "lucide-react";
 import { toast } from "sonner";
 import { ensureStudentNumber } from "@/lib/onboarding.functions";
+import { joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
