@@ -72,9 +72,16 @@ function QualModules() {
                 <CardTitle className="text-base">{m.code} — {m.title}</CardTitle>
                 <CardDescription className="line-clamp-2">{m.description || "Open module"}</CardDescription>
               </CardHeader>
-              <CardContent className="flex items-center justify-end text-sm text-muted-foreground">
-                <ChevronRight className="h-4 w-4" />
+              <CardContent className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <User className="h-3.5 w-3.5 shrink-0" />
+                  <span className="truncate">
+                    {data?.lecturers?.[m.id]?.full_name || data?.lecturers?.[m.id]?.email || "Unassigned"}
+                  </span>
+                </span>
+                <ChevronRight className="h-4 w-4 shrink-0" />
               </CardContent>
+
             </Card>
           </Link>
         ))}
