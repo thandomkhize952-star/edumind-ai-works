@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { UserCog } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { splitName, joinName } from "@/lib/name";
 
 export const Route = createFileRoute("/_authenticated/lecturer/profile")({
   component: LecturerProfile,
