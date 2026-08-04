@@ -56,7 +56,10 @@ function Profile() {
         <CardHeader><CardTitle>Personal information</CardTitle><CardDescription>{data?.email}</CardDescription></CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={(e) => { e.preventDefault(); save.mutate(); }}>
-            <div><Label>Full name</Label><Input value={form.full_name} onChange={(e) => setForm(f => ({ ...f, full_name: e.target.value }))} /></div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><Label>First name</Label><Input value={form.first_name} onChange={(e) => setForm(f => ({ ...f, first_name: e.target.value }))} /></div>
+              <div><Label>Last name</Label><Input value={form.last_name} onChange={(e) => setForm(f => ({ ...f, last_name: e.target.value }))} /></div>
+            </div>
             <div><Label>Student number</Label><Input value={form.student_number || "Being allocated…"} readOnly disabled /><p className="mt-1 text-xs text-muted-foreground">Automatically allocated by the system.</p></div>
             <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm(f => ({ ...f, phone: e.target.value }))} /></div>
             <div><Label>Bio</Label><Textarea rows={4} value={form.bio} onChange={(e) => setForm(f => ({ ...f, bio: e.target.value }))} /></div>
