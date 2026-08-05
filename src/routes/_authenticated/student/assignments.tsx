@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { PageHero } from "@/components/PageHero";
-import { FileText, Send, CheckCircle2, Clock, CalendarDays, Award, ArrowRight, ClipboardList } from "lucide-react";
+import { FileText, CalendarDays, Award, ArrowRight, ClipboardList } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/student/assignments")({
   component: StudentAssignments,
@@ -154,5 +154,3 @@ function StudentAssignments() {
     </div>
   );
 }
-
-export const AssignmentIcons = { FileText, Send, CheckCircle2, Clock };
