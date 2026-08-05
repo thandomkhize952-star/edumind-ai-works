@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, MessageSquarePlus, Send, GraduationCap, FileText, Sparkles, Paperclip, X, Globe } from "lucide-react";
+import { Brain, MessageSquarePlus, Send, GraduationCap, FileText, Sparkles, Paperclip, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,7 @@ export const Route = createFileRoute("/_authenticated/student/tutor")({
   component: Tutor,
 });
 
-type Mode = "chat" | "practice" | "summarize" | "exam_plan" | "general";
+type Mode = "chat" | "practice" | "summarize" | "exam_plan";
 
 function Tutor() {
   const list = useServerFn(listChats);
@@ -76,7 +76,6 @@ function Tutor() {
 
   const modeButtons: { id: Mode; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "chat", label: "Chat", icon: Brain },
-    { id: "general", label: "Ask anything", icon: Globe },
     { id: "practice", label: "Practice questions", icon: GraduationCap },
     { id: "summarize", label: "Summarize", icon: FileText },
     { id: "exam_plan", label: "Exam plan", icon: Sparkles },
