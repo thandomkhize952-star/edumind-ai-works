@@ -160,7 +160,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
         ? {
             apiKey: geminiKey,
             baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
-            model: "gemini-3.6-flash",
+            model: "gemini-3.5-flash",
             extra: {},
           }
         : null;
