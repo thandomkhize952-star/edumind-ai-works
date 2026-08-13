@@ -26,6 +26,7 @@ import { Route as AuthenticatedStudentAssignmentsRouteImport } from './routes/_a
 import { Route as AuthenticatedLecturerProfileRouteImport } from './routes/_authenticated/lecturer/profile'
 import { Route as AuthenticatedLecturerPerformanceRouteImport } from './routes/_authenticated/lecturer/performance'
 import { Route as AuthenticatedLecturerAtRiskRouteImport } from './routes/_authenticated/lecturer/at-risk'
+import { Route as AuthenticatedCareerReviewsRouteImport } from './routes/_authenticated/career/reviews'
 import { Route as AuthenticatedCareerDashboardRouteImport } from './routes/_authenticated/career/dashboard'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
@@ -140,6 +141,12 @@ const AuthenticatedLecturerAtRiskRoute =
     path: '/lecturer/at-risk',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCareerReviewsRoute =
+  AuthenticatedCareerReviewsRouteImport.update({
+    id: '/career/reviews',
+    path: '/career/reviews',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedCareerDashboardRoute =
   AuthenticatedCareerDashboardRouteImport.update({
     id: '/career/dashboard',
@@ -247,6 +254,7 @@ export interface FileRoutesByFullPath {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/career/dashboard': typeof AuthenticatedCareerDashboardRoute
+  '/career/reviews': typeof AuthenticatedCareerReviewsRoute
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -281,6 +289,7 @@ export interface FileRoutesByTo {
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/career/dashboard': typeof AuthenticatedCareerDashboardRoute
+  '/career/reviews': typeof AuthenticatedCareerReviewsRoute
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -316,6 +325,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/career/dashboard': typeof AuthenticatedCareerDashboardRoute
+  '/_authenticated/career/reviews': typeof AuthenticatedCareerReviewsRoute
   '/_authenticated/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/_authenticated/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/_authenticated/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -352,6 +362,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/users'
     | '/career/dashboard'
+    | '/career/reviews'
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
@@ -386,6 +397,7 @@ export interface FileRouteTypes {
     | '/admin/reports'
     | '/admin/users'
     | '/career/dashboard'
+    | '/career/reviews'
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
@@ -420,6 +432,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/users'
     | '/_authenticated/career/dashboard'
+    | '/_authenticated/career/reviews'
     | '/_authenticated/lecturer/at-risk'
     | '/_authenticated/lecturer/performance'
     | '/_authenticated/lecturer/profile'
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLecturerAtRiskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/career/reviews': {
+      id: '/_authenticated/career/reviews'
+      path: '/career/reviews'
+      fullPath: '/career/reviews'
+      preLoaderRoute: typeof AuthenticatedCareerReviewsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/career/dashboard': {
       id: '/_authenticated/career/dashboard'
       path: '/career/dashboard'
@@ -713,6 +733,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
   AuthenticatedCareerDashboardRoute: typeof AuthenticatedCareerDashboardRoute
+  AuthenticatedCareerReviewsRoute: typeof AuthenticatedCareerReviewsRoute
   AuthenticatedLecturerAtRiskRoute: typeof AuthenticatedLecturerAtRiskRoute
   AuthenticatedLecturerPerformanceRoute: typeof AuthenticatedLecturerPerformanceRoute
   AuthenticatedLecturerProfileRoute: typeof AuthenticatedLecturerProfileRoute
@@ -744,6 +765,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
   AuthenticatedCareerDashboardRoute: AuthenticatedCareerDashboardRoute,
+  AuthenticatedCareerReviewsRoute: AuthenticatedCareerReviewsRoute,
   AuthenticatedLecturerAtRiskRoute: AuthenticatedLecturerAtRiskRoute,
   AuthenticatedLecturerPerformanceRoute: AuthenticatedLecturerPerformanceRoute,
   AuthenticatedLecturerProfileRoute: AuthenticatedLecturerProfileRoute,
