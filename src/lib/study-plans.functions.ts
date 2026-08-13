@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getLovableKey } from "./ai-fetch.server";
 
 /** study_plans / study_plan_tasks are not in the generated types yet. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

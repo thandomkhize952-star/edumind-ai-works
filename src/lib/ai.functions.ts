@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getLovableKey } from "./ai-fetch.server";
 
 // Retries a fetch call on transient errors (rate-limited or provider overloaded),
 // with a short exponential backoff. Non-transient errors are returned immediately.
