@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getLovableKey } from "./ai-fetch.server";
 
 /** study_plans / study_plan_tasks are not in the generated types yet. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -147,7 +148,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const db = supabase as unknown as LooseClient;
 
-    const lovableKey = process.env.LOVABLE_API_KEY;
+    const lovableKey = getLovableKey();
     const geminiKey = process.env.GEMINI_API_KEY;
     const provider = lovableKey
       ? {

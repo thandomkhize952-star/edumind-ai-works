@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { getLovableKey } from "./ai-fetch.server";
 
 // Retries a fetch call on transient errors (rate-limited or provider overloaded),
 // with a short exponential backoff. Non-transient errors are returned immediately.
@@ -40,7 +41,7 @@ export const aiChat = createServerFn({ method: "POST" })
 
     // Prefer Lovable's AI gateway when running on Lovable (key is auto-injected there).
     // Fall back to calling Gemini directly when it's not present (e.g. on Vercel).
-    const lovableKey = process.env.LOVABLE_API_KEY;
+    const lovableKey = getLovableKey();
     const geminiKey = process.env.GEMINI_API_KEY;
 
     const provider = lovableKey
