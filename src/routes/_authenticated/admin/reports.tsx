@@ -80,7 +80,7 @@ function UserReportCard() {
   const { busy, run, format, setFormat } = useDownloader(fn);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [role, setRole] = useState<"all" | "admin" | "lecturer" | "student" | "none">("all");
+  const [role, setRole] = useState<"all" | "admin" | "lecturer" | "student" | "career_advisor" | "none">("all");
 
   return (
     <Card>

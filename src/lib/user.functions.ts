@@ -12,6 +12,6 @@ export const getCurrentUserContext = createServerFn({ method: "GET" })
     return {
       userId,
       profile,
-      roles: (roles ?? []).map((r) => r.role as "admin" | "lecturer" | "student"),
+      roles: (roles ?? []).map((r) => r.role as "admin" | "lecturer" | "student" | "career_advisor"),
     };
   });

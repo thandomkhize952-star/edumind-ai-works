@@ -4,7 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/integrations/supabase/types";
 import { z } from "zod";
 
-const RoleEnum = z.enum(["admin", "lecturer", "student"]);
+const RoleEnum = z.enum(["admin", "lecturer", "student", "career_advisor"]);
 
 async function requireAdmin(supabase: SupabaseClient<Database>, userId: string) {
   const { data } = await supabase
@@ -77,7 +77,7 @@ export const createStaffUser = createServerFn({ method: "POST" })
         email: z.string().email(),
         password: z.string().min(6),
         fullName: z.string().min(1),
-        role: z.enum(["lecturer", "admin"]).default("lecturer"),
+        role: z.enum(["lecturer", "admin", "career_advisor"]).default("lecturer"),
       })
       .parse(d),
   )

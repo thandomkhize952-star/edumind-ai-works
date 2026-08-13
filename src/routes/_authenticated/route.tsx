@@ -36,7 +36,9 @@ function AuthedShell() {
   const roles = data?.roles ?? [];
   const isAdmin = roles.includes("admin");
   const isLecturer = roles.includes("lecturer");
-  const isStudent = roles.includes("student") || roles.length === 0;
+  const isAdvisor = roles.includes("career_advisor");
+  const isStudent = (roles.includes("student") || roles.length === 0) && !isAdvisor;
+
 
   type NavItem = { to: string; label: string; icon: typeof BookOpen; badge?: number };
   type NavGroup = { label: string; items: NavItem[] };
@@ -79,6 +81,19 @@ function AuthedShell() {
         ],
       },
       { label: "Account", items: [{ to: "/lecturer/profile", label: "My Profile", icon: UserCog }] },
+    );
+  }
+
+  if (isAdvisor) {
+    groups.push(
+      {
+        label: "Career",
+        items: [
+          { to: "/career/dashboard", label: "Advisor Dashboard", icon: FileBadge },
+          { to: "/career/reviews", label: "CV Review Queue", icon: ClipboardList },
+        ],
+      },
+      { label: "Account", items: [{ to: "/student/profile", label: "My Profile", icon: UserCog }] },
     );
   }
 

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -23,8 +23,13 @@ function Dashboard() {
   const roles = me?.roles ?? [];
   const isLecturer = roles.includes("lecturer");
   const isAdmin = roles.includes("admin");
-  const isStudent = !isLecturer && !isAdmin && (roles.includes("student") || roles.length === 0);
+  const isAdvisor = roles.includes("career_advisor");
+  const isStudent = !isLecturer && !isAdmin && !isAdvisor && (roles.includes("student") || roles.length === 0);
   const name = me?.profile?.full_name || me?.profile?.email || "there";
+
+  if (isAdvisor && !isAdmin) {
+    return <Navigate to="/career/dashboard" replace />;
+  }
 
   if (isLecturer && me?.userId) {
     return <LecturerDashboard userId={me.userId} name={name} />;
@@ -33,6 +38,7 @@ function Dashboard() {
   if (isAdmin) {
     return <AdminDashboard name={name} />;
   }
+
 
   if (isStudent && me?.userId) {
     return <StudentDashboard userId={me.userId} name={name} />;
