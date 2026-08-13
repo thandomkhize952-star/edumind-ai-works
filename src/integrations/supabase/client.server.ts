@@ -54,7 +54,9 @@ function createSupabaseAdminClient() {
       autoRefreshToken: false,
     },
     realtime: {
-      transport: ws,
+      // ws is needed for Node.js < 22 which lacks native WebSocket.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transport: ws as any,
     },
   });
 }
