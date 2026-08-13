@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import type { SupabaseClient } from "@supabase/supabase-js";
+
+// cv_reviews is not in the generated Database types yet; use an untyped client for it.
+const db = (c: unknown) => c as SupabaseClient;
 import { fetchAiWithRetry, aiErrorMessage } from "./ai-fetch.server";
 
 const SYSTEM = `You are an experienced career advisor reviewing a student's CV/resume.
@@ -108,7 +112,7 @@ export const submitCv = createServerFn({ method: "POST" })
       .upload(path, bytes, { contentType: data.mimeType, upsert: false });
     if (upErr) throw new Error(upErr.message);
 
-    const { data: row, error } = await supabase
+    const { data: row, error } = await db(supabase)
       .from("cv_reviews")
       .insert({ student_id: userId, file_name: data.name, file_path: path, status: "pending" })
       .select("id")
@@ -118,12 +122,12 @@ export const submitCv = createServerFn({ method: "POST" })
     try {
       const raw = await reviewWithAi(data.name, data.mimeType, data.dataUrl);
       const parsed = parseReview(raw);
-      await supabase
+      await db(supabase)
         .from("cv_reviews")
         .update({ status: "reviewed", score: parsed.score, summary: parsed.summary, feedback: parsed.feedback })
         .eq("id", row.id);
     } catch (e) {
-      await supabase
+      await db(supabase)
         .from("cv_reviews")
         .update({ status: "failed", feedback: e instanceof Error ? e.message : "Review failed" })
         .eq("id", row.id);
@@ -136,7 +140,7 @@ export const submitCv = createServerFn({ method: "POST" })
 export const listCvReviews = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { data } = await db(context.supabase)
       .from("cv_reviews")
       .select("*")
       .eq("student_id", context.userId)
@@ -157,7 +161,7 @@ export const getCvUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { data: row } = await context.supabase
+    const { data: row } = await db(context.supabase)
       .from("cv_reviews")
       .select("file_path")
       .eq("id", data.id)
@@ -175,7 +179,7 @@ export const deleteCvReview = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("cv_reviews").delete().eq("id", data.id);
+    const { error } = await db(context.supabase).from("cv_reviews").delete().eq("id", data.id);
     if (error) throw error;
     return { ok: true };
   });
