@@ -84,6 +84,19 @@ function AuthedShell() {
     );
   }
 
+  if (isAdvisor) {
+    groups.push(
+      {
+        label: "Career",
+        items: [
+          { to: "/career/dashboard", label: "Advisor Dashboard", icon: FileBadge },
+          { to: "/career/reviews", label: "CV Review Queue", icon: ClipboardList },
+        ],
+      },
+      { label: "Account", items: [{ to: "/student/profile", label: "My Profile", icon: UserCog }] },
+    );
+  }
+
   if (isAdmin) {
     groups.push(
       {
