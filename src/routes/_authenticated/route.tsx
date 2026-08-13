@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { getCurrentUserContext } from "@/lib/user.functions";
 import { getMyNotifications } from "@/lib/at-risk.functions";
-import { GraduationCap, LayoutDashboard, Users, BookOpen, Layers, ClipboardList, FileText, Brain, UserCog, LogOut, CalendarCheck, Library, AlertTriangle, Bell, BarChart3, FileSpreadsheet } from "lucide-react";
+import { GraduationCap, LayoutDashboard, Users, BookOpen, Layers, ClipboardList, FileText, Brain, UserCog, LogOut, CalendarCheck, Library, AlertTriangle, Bell, BarChart3, FileSpreadsheet, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,7 @@ function AuthedShell() {
       },
       { label: "AI Tutor", items: [{ to: "/student/tutor", label: "Chat with AI", icon: Brain }] },
       { label: "Study Plan", items: [{ to: "/student/study-plans", label: "AI Study Plans", icon: CalendarCheck }] },
+      { label: "Career", items: [{ to: "/student/cv-review", label: "CV Review", icon: FileBadge }] },
       {
         label: "Account",
         items: [
