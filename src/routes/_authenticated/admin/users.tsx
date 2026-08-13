@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
   component: AdminUsers,
 });
 
-const ROLES = ["admin", "lecturer", "student"] as const;
+const ROLES = ["admin", "lecturer", "career_advisor", "student"] as const;
 
 function AdminUsers() {
   const list = useServerFn(listAllUsers);

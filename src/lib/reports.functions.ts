@@ -23,7 +23,7 @@ export const getUserReport = createServerFn({ method: "POST" })
       .object({
         from: optDate,
         to: optDate,
-        role: z.enum(["all", "admin", "lecturer", "student", "none"]).default("all"),
+        role: z.enum(["all", "admin", "lecturer", "student", "career_advisor", "none"]).default("all"),
       })
       .parse(d ?? {}),
   )
