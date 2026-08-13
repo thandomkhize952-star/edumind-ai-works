@@ -20,6 +20,7 @@ import { Route as AuthenticatedStudentNotificationsRouteImport } from './routes/
 import { Route as AuthenticatedStudentMaterialsRouteImport } from './routes/_authenticated/student/materials'
 import { Route as AuthenticatedStudentMarksRouteImport } from './routes/_authenticated/student/marks'
 import { Route as AuthenticatedStudentEnrollRouteImport } from './routes/_authenticated/student/enroll'
+import { Route as AuthenticatedStudentCvReviewRouteImport } from './routes/_authenticated/student/cv-review'
 import { Route as AuthenticatedStudentCoursesRouteImport } from './routes/_authenticated/student/courses'
 import { Route as AuthenticatedStudentAssignmentsRouteImport } from './routes/_authenticated/student/assignments'
 import { Route as AuthenticatedLecturerProfileRouteImport } from './routes/_authenticated/lecturer/profile'
@@ -100,6 +101,12 @@ const AuthenticatedStudentEnrollRoute =
   AuthenticatedStudentEnrollRouteImport.update({
     id: '/student/enroll',
     path: '/student/enroll',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStudentCvReviewRoute =
+  AuthenticatedStudentCvReviewRouteImport.update({
+    id: '/student/cv-review',
+    path: '/student/cv-review',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedStudentCoursesRoute =
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
   '/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
   '/student/courses': typeof AuthenticatedStudentCoursesRouteWithChildren
+  '/student/cv-review': typeof AuthenticatedStudentCvReviewRoute
   '/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/student/marks': typeof AuthenticatedStudentMarksRoute
   '/student/materials': typeof AuthenticatedStudentMaterialsRoute
@@ -268,6 +276,7 @@ export interface FileRoutesByTo {
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
   '/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
+  '/student/cv-review': typeof AuthenticatedStudentCvReviewRoute
   '/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/student/marks': typeof AuthenticatedStudentMarksRoute
   '/student/materials': typeof AuthenticatedStudentMaterialsRoute
@@ -302,6 +311,7 @@ export interface FileRoutesById {
   '/_authenticated/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
   '/_authenticated/student/assignments': typeof AuthenticatedStudentAssignmentsRoute
   '/_authenticated/student/courses': typeof AuthenticatedStudentCoursesRouteWithChildren
+  '/_authenticated/student/cv-review': typeof AuthenticatedStudentCvReviewRoute
   '/_authenticated/student/enroll': typeof AuthenticatedStudentEnrollRoute
   '/_authenticated/student/marks': typeof AuthenticatedStudentMarksRoute
   '/_authenticated/student/materials': typeof AuthenticatedStudentMaterialsRoute
@@ -336,6 +346,7 @@ export interface FileRouteTypes {
     | '/lecturer/profile'
     | '/student/assignments'
     | '/student/courses'
+    | '/student/cv-review'
     | '/student/enroll'
     | '/student/marks'
     | '/student/materials'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
     | '/lecturer/performance'
     | '/lecturer/profile'
     | '/student/assignments'
+    | '/student/cv-review'
     | '/student/enroll'
     | '/student/marks'
     | '/student/materials'
@@ -400,6 +412,7 @@ export interface FileRouteTypes {
     | '/_authenticated/lecturer/profile'
     | '/_authenticated/student/assignments'
     | '/_authenticated/student/courses'
+    | '/_authenticated/student/cv-review'
     | '/_authenticated/student/enroll'
     | '/_authenticated/student/marks'
     | '/_authenticated/student/materials'
@@ -501,6 +514,13 @@ declare module '@tanstack/react-router' {
       path: '/student/enroll'
       fullPath: '/student/enroll'
       preLoaderRoute: typeof AuthenticatedStudentEnrollRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/student/cv-review': {
+      id: '/_authenticated/student/cv-review'
+      path: '/student/cv-review'
+      fullPath: '/student/cv-review'
+      preLoaderRoute: typeof AuthenticatedStudentCvReviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/student/courses': {
@@ -677,6 +697,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedLecturerProfileRoute: typeof AuthenticatedLecturerProfileRoute
   AuthenticatedStudentAssignmentsRoute: typeof AuthenticatedStudentAssignmentsRoute
   AuthenticatedStudentCoursesRoute: typeof AuthenticatedStudentCoursesRouteWithChildren
+  AuthenticatedStudentCvReviewRoute: typeof AuthenticatedStudentCvReviewRoute
   AuthenticatedStudentEnrollRoute: typeof AuthenticatedStudentEnrollRoute
   AuthenticatedStudentMarksRoute: typeof AuthenticatedStudentMarksRoute
   AuthenticatedStudentMaterialsRoute: typeof AuthenticatedStudentMaterialsRoute
@@ -707,6 +728,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedStudentAssignmentsRoute: AuthenticatedStudentAssignmentsRoute,
   AuthenticatedStudentCoursesRoute:
     AuthenticatedStudentCoursesRouteWithChildren,
+  AuthenticatedStudentCvReviewRoute: AuthenticatedStudentCvReviewRoute,
   AuthenticatedStudentEnrollRoute: AuthenticatedStudentEnrollRoute,
   AuthenticatedStudentMarksRoute: AuthenticatedStudentMarksRoute,
   AuthenticatedStudentMaterialsRoute: AuthenticatedStudentMaterialsRoute,
