@@ -40,7 +40,7 @@ export const aiChat = createServerFn({ method: "POST" })
 
     // Prefer Lovable's AI gateway when running on Lovable (key is auto-injected there).
     // Fall back to calling Gemini directly when it's not present (e.g. on Vercel).
-    const lovableKey = process.env.LOVABLE_API_KEY;
+    const lovableKey = getLovableKey();
     const geminiKey = process.env.GEMINI_API_KEY;
 
     const provider = lovableKey

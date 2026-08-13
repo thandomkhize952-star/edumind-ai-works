@@ -147,7 +147,7 @@ export const generateStudyPlan = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const db = supabase as unknown as LooseClient;
 
-    const lovableKey = process.env.LOVABLE_API_KEY;
+    const lovableKey = getLovableKey();
     const geminiKey = process.env.GEMINI_API_KEY;
     const provider = lovableKey
       ? {

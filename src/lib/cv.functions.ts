@@ -5,7 +5,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 // cv_reviews is not in the generated Database types yet; use an untyped client for it.
 const db = (c: unknown) => c as SupabaseClient;
-import { fetchAiWithRetry, aiErrorMessage } from "./ai-fetch.server";
+import { fetchAiWithRetry, aiErrorMessage, getLovableKey } from "./ai-fetch.server";
 
 const SYSTEM = `You are an experienced career advisor reviewing a student's CV/resume.
 Return your answer in this exact format:
@@ -36,7 +36,7 @@ function parseReview(text: string) {
 }
 
 async function reviewWithAi(fileName: string, mimeType: string, dataUrl: string) {
-  const lovableKey = process.env.LOVABLE_API_KEY;
+  const lovableKey = getLovableKey();
   const geminiKey = process.env.GEMINI_API_KEY;
   if (!lovableKey && !geminiKey) throw new Error("AI is not configured");
 

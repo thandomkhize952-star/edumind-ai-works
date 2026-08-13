@@ -47,3 +47,11 @@ export function aiErrorMessage(status: number, text: string) {
     return "The AI service is temporarily overloaded. Please try again in a few seconds.";
   return `AI error: ${text.slice(0, 200)}`;
 }
+
+// The Lovable gateway only accepts keys starting with "sk_". Locally the key is
+// often missing or a placeholder, in which case we must fall back to Gemini
+// instead of failing with a 401 "Invalid API key format".
+export function getLovableKey(): string | undefined {
+  const key = process.env.LOVABLE_API_KEY?.trim();
+  return key && key.startsWith("sk_") ? key : undefined;
+}
