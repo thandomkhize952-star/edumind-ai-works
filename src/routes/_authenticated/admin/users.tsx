@@ -80,7 +80,8 @@ function AdminUsers() {
                         <div className="flex flex-wrap gap-1.5">
                           {(u.roles.length ? ROLES.filter(r => u.roles.includes(r)) : ["student"]).map((r) => (
                             <Badge key={r} variant={r === "admin" ? "default" : r === "lecturer" ? "secondary" : "outline"} className="capitalize">
-                              {r}
+                              {r.replace("_", " ")}
+
                             </Badge>
                           ))}
                         </div>
