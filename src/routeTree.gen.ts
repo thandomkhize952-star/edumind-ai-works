@@ -26,6 +26,7 @@ import { Route as AuthenticatedStudentAssignmentsRouteImport } from './routes/_a
 import { Route as AuthenticatedLecturerProfileRouteImport } from './routes/_authenticated/lecturer/profile'
 import { Route as AuthenticatedLecturerPerformanceRouteImport } from './routes/_authenticated/lecturer/performance'
 import { Route as AuthenticatedLecturerAtRiskRouteImport } from './routes/_authenticated/lecturer/at-risk'
+import { Route as AuthenticatedCareerDashboardRouteImport } from './routes/_authenticated/career/dashboard'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
 import { Route as AuthenticatedAdminReportsRouteImport } from './routes/_authenticated/admin/reports'
 import { Route as AuthenticatedAdminQualificationsRouteImport } from './routes/_authenticated/admin/qualifications'
@@ -139,6 +140,12 @@ const AuthenticatedLecturerAtRiskRoute =
     path: '/lecturer/at-risk',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCareerDashboardRoute =
+  AuthenticatedCareerDashboardRouteImport.update({
+    id: '/career/dashboard',
+    path: '/career/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -239,6 +246,7 @@ export interface FileRoutesByFullPath {
   '/admin/qualifications': typeof AuthenticatedAdminQualificationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/career/dashboard': typeof AuthenticatedCareerDashboardRoute
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -272,6 +280,7 @@ export interface FileRoutesByTo {
   '/admin/qualifications': typeof AuthenticatedAdminQualificationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/career/dashboard': typeof AuthenticatedCareerDashboardRoute
   '/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -306,6 +315,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/qualifications': typeof AuthenticatedAdminQualificationsRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/career/dashboard': typeof AuthenticatedCareerDashboardRoute
   '/_authenticated/lecturer/at-risk': typeof AuthenticatedLecturerAtRiskRoute
   '/_authenticated/lecturer/performance': typeof AuthenticatedLecturerPerformanceRoute
   '/_authenticated/lecturer/profile': typeof AuthenticatedLecturerProfileRoute
@@ -341,6 +351,7 @@ export interface FileRouteTypes {
     | '/admin/qualifications'
     | '/admin/reports'
     | '/admin/users'
+    | '/career/dashboard'
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
@@ -374,6 +385,7 @@ export interface FileRouteTypes {
     | '/admin/qualifications'
     | '/admin/reports'
     | '/admin/users'
+    | '/career/dashboard'
     | '/lecturer/at-risk'
     | '/lecturer/performance'
     | '/lecturer/profile'
@@ -407,6 +419,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/qualifications'
     | '/_authenticated/admin/reports'
     | '/_authenticated/admin/users'
+    | '/_authenticated/career/dashboard'
     | '/_authenticated/lecturer/at-risk'
     | '/_authenticated/lecturer/performance'
     | '/_authenticated/lecturer/profile'
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedLecturerAtRiskRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/career/dashboard': {
+      id: '/_authenticated/career/dashboard'
+      path: '/career/dashboard'
+      fullPath: '/career/dashboard'
+      preLoaderRoute: typeof AuthenticatedCareerDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/admin/users'
@@ -692,6 +712,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAdminQualificationsRoute: typeof AuthenticatedAdminQualificationsRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedCareerDashboardRoute: typeof AuthenticatedCareerDashboardRoute
   AuthenticatedLecturerAtRiskRoute: typeof AuthenticatedLecturerAtRiskRoute
   AuthenticatedLecturerPerformanceRoute: typeof AuthenticatedLecturerPerformanceRoute
   AuthenticatedLecturerProfileRoute: typeof AuthenticatedLecturerProfileRoute
@@ -722,6 +743,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAdminQualificationsRoute: AuthenticatedAdminQualificationsRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
+  AuthenticatedCareerDashboardRoute: AuthenticatedCareerDashboardRoute,
   AuthenticatedLecturerAtRiskRoute: AuthenticatedLecturerAtRiskRoute,
   AuthenticatedLecturerPerformanceRoute: AuthenticatedLecturerPerformanceRoute,
   AuthenticatedLecturerProfileRoute: AuthenticatedLecturerProfileRoute,
